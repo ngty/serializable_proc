@@ -5,12 +5,14 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "serializable_proc"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
+    gem.summary = %Q{Proc that can be serialized}
+    gem.description = %Q{Give & take, serializing a ruby proc is possible, though not a perfect one.}
     gem.email = "ngty77@gmail.com"
     gem.homepage = "http://github.com/ngty/serializable_proc"
     gem.authors = ["NgTzeYang"]
     gem.add_development_dependency "bacon", ">= 0"
+    gem.add_dependency 'ruby_parser', '>= 2.0.4'
+    gem.add_dependency 'ruby2ruby', '>= 1.2.4'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
