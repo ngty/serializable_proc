@@ -121,7 +121,7 @@ class SerializableProc
         end
 
         def code_regexp
-          /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|(.*?)\|\s*)?)/m
+          /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
         end
 
     end
