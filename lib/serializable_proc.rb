@@ -34,18 +34,7 @@ class SerializableProc
   alias_method :[], :call
   alias_method :to_s, :code
 
-  def marshal_dump
-    [@code, @proc]
-  end
-
-  def marshal_load(data)
-    @code, @proc = data
-  end
-
   private
-
-    def eval!
-    end
 
     def extract_code(matcher)
       code, remaining = matcher.code_args
