@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-describe 'Variable args serializable proc' do
+describe 'Optional arg serializable proc' do
 
   extend SerializableProc::Spec::Macros
 
