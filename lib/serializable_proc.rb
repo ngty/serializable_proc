@@ -18,6 +18,22 @@ class SerializableProc
     @code = extract_code(Matcher.new(@proc))
   end
 
+  def ==(other)
+    other.object_id == object_id or
+      other.is_a?(SerializableProc) && other.code == code
+  end
+
+  def call(*args)
+    to_proc.call(*args)
+  end
+
+  def to_proc
+    eval(@code, nil, file, line)
+  end
+
+  alias_method :[], :call
+  alias_method :to_s, :code
+
   def marshal_dump
     [@code, @proc]
   end
@@ -29,7 +45,6 @@ class SerializableProc
   private
 
     def eval!
-      eval(@code, nil, @file, @line)
     end
 
     def extract_code(matcher)
