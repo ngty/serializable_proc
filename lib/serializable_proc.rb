@@ -88,8 +88,8 @@ class SerializableProc
               @sexp, @code = [
                 sexp, unescape_magic_vars(
                   RUBY_2_RUBY.process(eval(sexp += frag)).
-                    sub(/(SerializableProc\.new|Proc\.new|proc)/m,'lambda').
-                    sub(/__serializable_proc_marker__\(\d+\)\s*;?\s*\n?/m,'')
+                    sub(/(SerializableProc\.new|Proc\.new|proc)/,'lambda').
+                    sub(/__serializable_(lambda|proc)_marker__\(\d+\)\s*;?\s*\n?/m,'')
                 )
               ]
             rescue SyntaxError
@@ -100,15 +100,16 @@ class SerializableProc
 
         def extract_sexp_args
           raw, marker = raw_sexp_and_marker
+          rq = lambda{|s| Regexp.quote(s) }
           regexp = Regexp.new([
-            '^(.*(',
-            Regexp.quote(
+            '^(.*(', (
               case marker
-              when /(SerializableProc|Proc)/ then "s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"
-              when /(proc|lambda)/ then "s(:iter, s(:call, nil, :#{$1}, s(:arglist"
+              when /(SerializableProc|Proc)/ then rq["s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"]
+              else rq['s(:iter, s(:call, nil, :'] + '(?:proc|lambda)' + rq[', s(:arglist']
               end
-            ), '.*?',
-            Regexp.quote("s(:call, nil, :__serializable_proc_marker__, s(:arglist, s(:lit, #{line})))"),
+            ),
+            '.*?',
+            rq["s(:call, nil, :__serializable_proc_marker__, s(:arglist, s(:lit, #{line})))"],
             '))(.*)$'
           ].join, Regexp::MULTILINE)
           raw.match(regexp)[2..3]

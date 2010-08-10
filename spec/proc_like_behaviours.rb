@@ -22,26 +22,20 @@ describe 'Proc like behaviours' do
 
   end
 
-  describe '>> []' do
+  describe '>> call (alias [])' do
 
     should 'return yield result given no arg' do
-      SerializableProc.new { %w{b c}.map{|x| x } }[].should.equal(%w{b c})
+      s_proc = SerializableProc.new { %w{b c}.map{|x| x } }
+      expected = %w{b c}
+      s_proc.call.should.equal(expected)
+      s_proc[].should.equal(expected)
     end
 
     should 'return yield result given arg' do
-      SerializableProc.new {|n| %w{b c}.map{|x| x * n } }[2].should.equal(%w{bb cc})
-    end
-
-  end
-
-  describe '>> call' do
-
-    should 'return yield result given no arg' do
-      SerializableProc.new { %w{b c}.map{|x| x } }.call.should.equal(%w{b c})
-    end
-
-    should 'return yield result given arg' do
-      SerializableProc.new {|n| %w{b c}.map{|x| x * n } }.call(2).should.equal(%w{bb cc})
+      s_proc = SerializableProc.new {|n| %w{b c}.map{|x| x * n } }
+      expected = %w{bb cc}
+      s_proc.call(2).should.equal(expected)
+      s_proc[2].should.equal(expected)
     end
 
   end
@@ -74,8 +68,9 @@ describe 'Proc like behaviours' do
   end
 
   describe '>> to_s' do
+    extend SerializableProc::Spec::Helpers
     should 'return its code' do
-      SerializableProc.new{ x }.to_s.should == 'lambda { x }'
+      SerializableProc.new{ x }.to_s.should.be having_same_semantics_as('lambda { x }')
     end
   end
 
