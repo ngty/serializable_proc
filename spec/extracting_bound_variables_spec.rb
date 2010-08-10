@@ -89,7 +89,7 @@ describe 'Extracting bound variables' do
 
   describe '>> extracting method returns' do
     should "not handle" do
-      SerializableProc.new { m1 + m2(3) }.contexts.should.be.empty
+      SerializableProc.new { m1 + m2(3) }.contexts.hash.should.be.empty
     end
   end
 

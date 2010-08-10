@@ -53,9 +53,9 @@ class SerializableProc
     module Macros
 
       def should_have_expected_contexts(s_proc, expected)
-        s_proc.contexts.should.equal(expected)
+        s_proc.contexts.hash.should.equal(expected)
         expected.each do |key, val|
-          (s_proc.contexts[key].should.not.be same_object_as(val)) if val
+          (s_proc.contexts.hash[key].should.not.be same_object_as(val)) if val
         end
       end
 

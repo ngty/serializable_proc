@@ -16,7 +16,7 @@ class SerializableProc
 
   def initialize(&block)
     @proc = Proc.new(block)
-    @contexts = Contexts.new(@proc.sexp, block.binding).hash
+    @contexts = Contexts.new(@proc.sexp, block.binding)
   end
 
   def ==(other)
@@ -25,7 +25,7 @@ class SerializableProc
   end
 
   def call(*args)
-    to_proc.call(*args)
+    @contexts.instance_exec(*args, &self)
   end
 
   def to_proc
@@ -45,6 +45,7 @@ class SerializableProc
     class Contexts
 
       attr_reader :hash
+      alias_method :_instance_exec, :instance_exec
 
       def initialize(sexp, binding)
         @hash, _sexp = {}, sexp.dup
@@ -55,13 +56,51 @@ class SerializableProc
         end
       end
 
+      def instance_exec(*args, &block)
+        within_set_globals{ instance.instance_exec(*args, &block) }
+      end
+
       private
+
+        def instance
+          @instance ||= (
+            class_vars = @hash.select{|k,v| k.to_s =~ /^@@/ }
+            instance_vars = @hash.select{|k,v| k.to_s =~ /^@[^@]/ }
+            local_vars = @hash.select{|k,v| k.to_s =~ /^[^@\$]/ }
+            object = Class.new {
+              local_vars.each{|var, val| define_method(var){ val } }
+              class_vars.each{|var, val| class_variable_set(var, val) }
+              define_method(:initialize){ instance_vars.each{|var, val| instance_variable_set(var, val) } }
+            }.new
+          )
+        end
 
         def append(var, val)
           begin
             @hash.update(var.to_sym => Marshal.load(Marshal.dump(val)))
           rescue TypeError
             raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
+          end
+        end
+
+        def within_set_globals(&block)
+          # Execute the block within some sort of transaction, where globals are set
+          # to whatever is found in @hash, & reverted back to original after block yield
+          begin
+            # Backup globals
+            @hash.each do |var, val|
+              if var.to_s =~ /^\$/
+                (@globals_backup ||= {}).update(var => (eval(var.to_s) rescue nil))
+                eval("#{var} = Marshal.load(%|#{Marshal.dump(val).gsub('|','\|')}|)")
+              end
+            end
+            yield
+          ensure
+            # Revert globals
+            (@globals_backup ||= {}).each do |global, val|
+              eval("#{global} = Marshal.load(%|#{Marshal.dump(val).gsub('|','\|')}|)")
+            end
+            @globals_backup = nil
           end
         end
 

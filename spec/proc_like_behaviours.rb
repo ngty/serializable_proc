@@ -38,6 +38,49 @@ describe 'Proc like behaviours' do
       s_proc[2].should.equal(expected)
     end
 
+    should 'reflect bound local variable' do
+      x, y = 'awe', 'some'
+      s_proc = SerializableProc.new { x + y }
+      expected = x + y
+      s_proc.call.should.equal(expected)
+      s_proc[].should.equal(expected)
+    end
+
+    should 'reflect bound instance variable' do
+      @x, @y = 'awe', 'some'
+      s_proc = SerializableProc.new { @x + @y }
+      expected = @x + @y
+      s_proc.call.should.equal(expected)
+      s_proc[].should.equal(expected)
+    end
+
+    should 'reflect bound class variable' do
+      @@x, @@y = 'awe', 'some'
+      s_proc = SerializableProc.new { @@x + @@y }
+      expected = @@x + @@y
+      s_proc.call.should.equal(expected)
+      s_proc[].should.equal(expected)
+    end
+
+    should 'reflect bound global variable' do
+      $x, $y = 'awe', 'some'
+      expected = $x + $y
+      s_proc = SerializableProc.new { $x + $y }
+      $x, $y = 'wonder', 'ful'
+      s_proc.call.should.equal(expected)
+      s_proc[].should.equal(expected)
+    end
+
+    should 'not affect any globals' do
+      $x, $y = 'awe', 'some'
+      s_proc = SerializableProc.new { $x + $y }
+      $x, $y = 'wonder', 'ful'
+      s_proc.call ; s_proc[]
+      $x.should.equal('wonder')
+      $y.should.equal('ful')
+
+    end
+
   end
 
   describe '>> clone' do
