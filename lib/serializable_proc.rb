@@ -9,9 +9,6 @@ class SerializableProc
   class NotImplementedError          < Exception ; end
   class CannotSerializeVariableError < Exception ; end
 
-  RUBY_PARSER = RubyParser.new
-  RUBY_2_RUBY = Ruby2Ruby.new
-
   extend Forwardable
   %w{line file code}.each{|meth| def_delegator :@proc, meth.to_sym }
 
@@ -70,6 +67,9 @@ class SerializableProc
     end
 
     class Proc
+
+      RUBY_PARSER = RubyParser.new
+      RUBY_2_RUBY = Ruby2Ruby.new
 
       attr_reader :file, :line, :code, :sexp
 
