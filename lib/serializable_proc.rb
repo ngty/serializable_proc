@@ -11,11 +11,12 @@ class SerializableProc
   extend Forwardable
   %w{line file arity}.each{|meth| def_delegator :@proc, meth.to_sym }
 
-  attr_reader :code
+  attr_reader :code, :context
 
   def initialize(&block)
     @proc = Proc.new(block)
-    @code = extract_code(Matcher.new(@proc))
+    @code, sexp = extract_code(Matcher.new(@proc))
+    @context = Context.new(sexp, block.binding)
   end
 
   def ==(other)
@@ -41,8 +42,9 @@ class SerializableProc
       while frag = matcher.next_frag(remaining)
         begin
           sexp = RUBY_PARSER.parse(escape_magic_vars(code += frag))
-          if matcher.matching_sexp?(sexp.inspect)
-            return unescape_magic_vars(RUBY_2_RUBY.process(sexp)).sub('proc {','lambda {')
+          if matcher.matching_sexp?(sexp_str = sexp.inspect)
+            code = unescape_magic_vars(RUBY_2_RUBY.process(sexp)).sub('proc {','lambda {')
+            return [code, sexp_str]
           end
         rescue SyntaxError, Racc::ParseError, NoMethodError
           remaining.sub!(frag,'')
@@ -70,6 +72,22 @@ class SerializableProc
         file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
         @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
         @raw_code = File.readlines(@file)[@line.pred .. -1].join
+      end
+
+    end
+
+    class Context
+
+      attr_reader :hash
+
+      def initialize(sexp, binding)
+        @hash = {}
+        while m = sexp.match(/^(.*?s\(:call, nil, :([^,]+), s\(:arglist\)\))/)
+          sexp.sub!(m[1],'')
+          next if %w{lambda proc}.include?(m[2])
+          key, val = m[2].to_sym, eval(m[2], binding)
+          @hash.update(key => Marshal.load(Marshal.dump(val)))
+        end
       end
 
     end
