@@ -23,10 +23,7 @@ describe 'Extracting bound variables' do
         {:x => x, :y => y, :z => nil}
     end
 
-    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
-      f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ f } }.should.be raising_cannot_serialize_variable_error('f')
-    end
+    # NOTE: Errors checking are found under ./initializing_errors_spec.rb
 
   end
 
@@ -46,10 +43,7 @@ describe 'Extracting bound variables' do
         {:@x => @x, :@y => @y, :@z => nil}
     end
 
-    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
-      @f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ @f } }.should.be raising_cannot_serialize_variable_error('@f')
-    end
+    # NOTE: Errors checking are found under ./initializing_errors_spec.rb
 
   end
 
@@ -69,10 +63,7 @@ describe 'Extracting bound variables' do
         {:@@x => @@x, :@@y => @@y, :@@z => nil}
     end
 
-    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
-      @@f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ @@f } }.should.be raising_cannot_serialize_variable_error('@@f')
-    end
+    # NOTE: Errors checking are found under ./initializing_errors_spec.rb
 
   end
 
@@ -92,10 +83,7 @@ describe 'Extracting bound variables' do
         {:$x => $x, :$y => $y, :$z => nil}
     end
 
-    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
-      $f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ $f } }.should.be raising_cannot_serialize_variable_error('$f')
-    end
+    # NOTE: Errors checking are found under ./initializing_errors_spec.rb
 
   end
 
