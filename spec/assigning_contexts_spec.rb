@@ -10,13 +10,13 @@ describe 'Assigning context' do
   should "extract local variables & and assign them as context [##{__LINE__}]" do
     x, y = 'awe', 'some'
     s_proc = SerializableProc.new { x + y }
-    s_proc.context.hash.should.equal(:x => 'awe', :y => 'some')
+    s_proc.contexts.should.equal(:x => 'awe', :y => 'some')
   end
 
   should "not call methods & and assign them as context [##{__LINE__}]" do
     x, y = 'awe', 'some'
     s_proc = SerializableProc.new { x + y + m1 + m2(3) }
-    s_proc.context.hash.should.equal(:x => 'awe', :y => 'some')
+    s_proc.contexts.should.equal(:x => 'awe', :y => 'some')
   end
 
 end

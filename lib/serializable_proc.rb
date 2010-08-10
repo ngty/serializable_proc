@@ -13,10 +13,11 @@ class SerializableProc
   extend Forwardable
   %w{line file code}.each{|meth| def_delegator :@proc, meth.to_sym }
 
-  attr_reader :context
+  attr_reader :contexts
 
   def initialize(&block)
     @proc = ProcLike.new(block)
+    @contexts = Context.new(@proc.sexp, block.binding).hash
   end
 
   def ==(other)
@@ -43,11 +44,11 @@ class SerializableProc
 
       def initialize(sexp, binding)
         @hash = {}
-        while m = sexp.match(/^(.*?s\(:call, nil, :([^,]+), s\(:arglist\)\))/)
-          sexp.sub!(m[1],'')
-          next if %w{lambda proc}.include?(m[2])
-          key, val = m[2].to_sym, eval(m[2], binding)
-          @hash.update(key => Marshal.load(Marshal.dump(val)))
+        while m = sexp.match(/^(.*?s\(:lvar, :([^\)]+)\))/)
+          ignore, var = m[1..2]
+          sexp.sub!(ignore,'')
+          ignore.include?("s(:lasgn, :#{var})") or
+            @hash.update(var.to_sym => Marshal.load(Marshal.dump(eval(var, binding))))
         end
       end
 
