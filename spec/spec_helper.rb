@@ -1,8 +1,6 @@
 require 'rubygems'
 require 'bacon'
 require 'tempfile'
-require 'ruby_parser'
-require 'ruby2ruby'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
@@ -11,6 +9,10 @@ require 'serializable_proc'
 Bacon.summary_on_exit
 
 class SerializableProc
+
+  # Just to make testing easier ..
+  public :code, :line, :file, :contexts
+
   module Spec
 
     module Matchers

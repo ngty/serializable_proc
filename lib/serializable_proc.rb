@@ -9,14 +9,13 @@ class SerializableProc
   class CannotInitializeError        < Exception ; end
   class CannotSerializeVariableError < Exception ; end
 
+  attr_reader :contexts
   extend Forwardable
   %w{line file code}.each{|meth| def_delegator :@proc, meth.to_sym }
 
-  attr_reader :contexts
-
   def initialize(&block)
-    @proc = Proc.new(block)
-    @contexts = Contexts.new(@proc.sexp, block.binding)
+    @proc = Proc.new(block, self.class)
+    @contexts = Contexts.new(@proc.sexp, block.binding, self.class)
   end
 
   def ==(other)
@@ -40,15 +39,18 @@ class SerializableProc
   alias_method :[], :call
   alias_method :to_s, :code
 
-  private
+  # NOTE: Better shut these out from public's access
+  protected :code, :line, :file, :contexts
 
-    class Contexts
+  protected
+
+    class Contexts #:nodoc#
 
       attr_reader :hash
       alias_method :_instance_exec, :instance_exec
 
-      def initialize(sexp, binding)
-        @hash, _sexp = {}, sexp.dup
+      def initialize(sexp, binding, rklass)
+        @hash, @rklass, _sexp = {}, rklass, sexp.dup
         while m = _sexp.match(/^(.*?s\(:(l|g|c|i)var, :([^\)]+)\))/)
           ignore, type, var = m[1..3]
           _sexp.sub!(ignore,'')
@@ -84,38 +86,38 @@ class SerializableProc
         end
 
         def within_set_globals(&block)
-          # Execute the block within some sort of transaction, where globals are set
-          # to whatever is found in @hash, & reverted back to original after block yield
-          begin
-            # Backup globals
-            @hash.each do |var, val|
-              if var.to_s =~ /^\$/
-                (@globals_backup ||= {}).update(var => (eval(var.to_s) rescue nil))
-                eval("#{var} = Marshal.load(%|#{Marshal.dump(val).gsub('|','\|')}|)")
-              end
+          backup_globals
+          yield ensure revert_globals
+        end
+
+        def backup_globals
+          @hash.each do |var, val|
+            if var.to_s =~ /^\$/
+              (@globals_backup ||= {}).update(var => (eval(var.to_s) rescue nil))
+              eval("#{var} = Marshal.load(%|#{Marshal.dump(val).gsub('|','\|')}|)")
             end
-            yield
-          ensure
-            # Revert globals
-            (@globals_backup ||= {}).each do |global, val|
-              eval("#{global} = Marshal.load(%|#{Marshal.dump(val).gsub('|','\|')}|)")
-            end
-            @globals_backup = nil
           end
+        end
+
+        def revert_globals
+          (@globals_backup ||= {}).each do |global, val|
+            eval("#{global} = Marshal.load(%|#{Marshal.dump(val).gsub('|','\|')}|)")
+          end
+          @globals_backup = nil
         end
 
     end
 
-    class Proc
+    class Proc #:nodoc#
 
       RUBY_PARSER = RubyParser.new
       RUBY_2_RUBY = Ruby2Ruby.new
 
       attr_reader :file, :line, :code, :sexp
 
-      def initialize(block)
+      def initialize(block, rklass)
         file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
-        @file, @line = File.expand_path(file), line.to_i
+        @rklass, @file, @line = rklass, File.expand_path(file), line.to_i
         initialize_code_and_sexp
       end
 
@@ -128,7 +130,7 @@ class SerializableProc
               @sexp, @code = [
                 sexp, unescape_magic_vars(
                   RUBY_2_RUBY.process(eval(sexp += frag)).
-                    sub(/(SerializableProc\.new|Proc\.new|proc)/,'lambda').
+                    sub(/(#{@rklass}\.new|Proc\.new|proc)/,'lambda').
                     sub(/__serializable_(lambda|proc)_marker__\(\d+\)\s*;?\s*\n?/m,'')
                 )
               ]
@@ -144,7 +146,7 @@ class SerializableProc
           regexp = Regexp.new([
             '^(.*(', (
               case marker
-              when /(SerializableProc|Proc)/ then rq["s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"]
+              when /(#{@rklass}|Proc)/ then rq["s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"]
               else rq['s(:iter, s(:call, nil, :'] + '(?:proc|lambda)' + rq[', s(:arglist']
               end
             ),
@@ -156,7 +158,7 @@ class SerializableProc
         end
 
         def raw_sexp_and_marker
-          regexp = /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
+          regexp = /^(.*?(#{@rklass}\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
           raw = raw_code
           frag1, frag2 = [(0 .. (line - 2)), (line.pred .. -1)].map{|r| raw[r].join }
           match, type = frag2.match(regexp)[1..2]
@@ -166,12 +168,12 @@ class SerializableProc
           if raw[line.pred].split(type).size > 2
             raise CannotInitializeError.new \
               "Static code analysis can only handle single occurrence of '#{type}' per line !!"
+          else
+            [
+              RUBY_PARSER.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
+              marker
+            ]
           end
-
-          [
-            RUBY_PARSER.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
-            marker
-          ]
         end
 
         def escape_magic_vars(s)
