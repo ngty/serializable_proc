@@ -32,6 +32,14 @@ class SerializableProc
         end
       end
 
+      def raising_cannot_serialize_variable_error(var)
+        lambda do |block|
+          block.should.raise(SerializableProc::CannotSerializeVariableError).
+            message.should.equal('Variable %s cannot be serialized !!' % var)
+          true
+        end
+      end
+
     end
 
     module Macros

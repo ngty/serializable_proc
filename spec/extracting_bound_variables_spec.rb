@@ -1,13 +1,13 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-describe 'Contextual references' do
+describe 'Extracting bound variables' do
 
   class << self
     def m1    ; 'm1' ; end
     def m2(x) ; 'm2(%s)' % x ; end
   end
 
-  describe '>> assigning local variables' do
+  describe '>> extracting local variables' do
 
     extend SerializableProc::Spec::Helpers
 
@@ -23,14 +23,14 @@ describe 'Contextual references' do
         {:x => x, :y => y, :z => nil}
     end
 
-    should "raise TypeError if variable cannot be marshalled" do
+    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
       f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ f } }.should.raise(TypeError)
+      lambda { SerializableProc.new{ f } }.should.be raising_cannot_serialize_variable_error('f')
     end
 
   end
 
-  describe '>> assigning instance variables' do
+  describe '>> extracting instance variables' do
 
     extend SerializableProc::Spec::Helpers
 
@@ -46,14 +46,14 @@ describe 'Contextual references' do
         {:@x => @x, :@y => @y, :@z => nil}
     end
 
-    should "raise TypeError if variable cannot be marshalled" do
+    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
       @f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ @f } }.should.raise(TypeError)
+      lambda { SerializableProc.new{ @f } }.should.be raising_cannot_serialize_variable_error('@f')
     end
 
   end
 
-  describe '>> assigning class variables' do
+  describe '>> extracting class variables' do
 
     extend SerializableProc::Spec::Helpers
 
@@ -69,14 +69,14 @@ describe 'Contextual references' do
         {:@@x => @@x, :@@y => @@y, :@@z => nil}
     end
 
-    should "raise TypeError if variable cannot be marshalled" do
+    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
       @@f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ @@f } }.should.raise(TypeError)
+      lambda { SerializableProc.new{ @@f } }.should.be raising_cannot_serialize_variable_error('@@f')
     end
 
   end
 
-  describe '>> assigning global variables' do
+  describe '>> extracting global variables' do
 
     extend SerializableProc::Spec::Helpers
 
@@ -92,14 +92,14 @@ describe 'Contextual references' do
         {:$x => $x, :$y => $y, :$z => nil}
     end
 
-    should "raise TypeError if variable cannot be marshalled" do
+    should "raise SerializableProc::CannotSerializeVariableError if variable cannot be marshalled" do
       $f = Tempfile.new('fake')
-      lambda { SerializableProc.new{ $f } }.should.raise(TypeError)
+      lambda { SerializableProc.new{ $f } }.should.be raising_cannot_serialize_variable_error('$f')
     end
 
   end
 
-  describe '>> assigning method returns' do
+  describe '>> extracting method returns' do
     should "not handle" do
       SerializableProc.new { m1 + m2(3) }.contexts.should.be.empty
     end
