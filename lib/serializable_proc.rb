@@ -48,14 +48,19 @@ class SerializableProc
       attr_reader :hash
 
       def initialize(sexp, binding)
-        @hash = {}
-        while m = sexp.match(/^(.*?s\(:lvar, :([^\)]+)\))/)
-          ignore, var = m[1..2]
-          sexp.sub!(ignore,'')
-          ignore.include?("s(:lasgn, :#{var})") or
-            @hash.update(var.to_sym => Marshal.load(Marshal.dump(eval(var, binding))))
+        @hash, _sexp = {}, sexp.dup
+        while m = _sexp.match(/^(.*?s\(:(l|g|c|i)var, :([^\)]+)\))/)
+          ignore, type, var = m[1..3]
+          _sexp.sub!(ignore,'')
+          append(var, (eval(var, binding) rescue nil))
         end
       end
+
+      private
+
+        def append(var, val)
+          @hash.update(var.to_sym => Marshal.load(Marshal.dump(val)))
+        end
 
     end
 
