@@ -1,48 +1,48 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-describe 'Optional arg serializable proc' do
+describe 'One arity serializable proc' do
 
   extend SerializableProc::Spec::Macros
 
   expected_file = File.expand_path(__FILE__)
-  expected_code = "lambda { |*args| [\"a\", \"b\"].map { |x| puts(x) } }"
+  expected_code = "lambda { |arg| [\"a\", \"b\"].map { |x| puts(x) } }"
 
   should_handle_proc_variable expected_file, expected_code, {
     # ////////////////////////////////////////////////////////////////////////
     # >> Always newlinling
     # ////////////////////////////////////////////////////////////////////////
       __LINE__ =>
-        lambda do |*args|
+        lambda do |arg|
           %w{a b}.map do |x|
             puts x
           end
         end,
       __LINE__ =>
-        lambda { |*args|
+        lambda { |arg|
           %w{a b}.map{|x|
             puts x
           }
         },
       __LINE__ =>
-        proc do |*args|
+        proc do |arg|
           %w{a b}.map do |x|
             puts x
           end
         end,
       __LINE__ =>
-        lambda { |*args|
+        lambda { |arg|
           %w{a b}.map{|x|
             puts x
           }
         },
       __LINE__ =>
-        Proc.new do |*args|
+        Proc.new do |arg|
           %w{a b}.map do |x|
             puts x
           end
         end,
       __LINE__ =>
-        Proc.new { |*args|
+        Proc.new { |arg|
           %w{a b}.map{|x|
             puts x
           }
@@ -51,69 +51,69 @@ describe 'Optional arg serializable proc' do
     # >> Partial newlining
     # ////////////////////////////////////////////////////////////////////////
       __LINE__ =>
-        lambda do |*args|
+        lambda do |arg|
           %w{a b}.map do |x| puts x end
         end,
       __LINE__ =>
-        lambda { |*args|
+        lambda { |arg|
           %w{a b}.map{|x| puts x }
         },
       __LINE__ =>
-        proc do |*args|
+        proc do |arg|
           %w{a b}.map do |x| puts x end
         end,
       __LINE__ =>
-        lambda { |*args|
+        lambda { |arg|
           %w{a b}.map{|x| puts x }
         },
       __LINE__ =>
-        Proc.new do |*args|
+        Proc.new do |arg|
           %w{a b}.map do |x| puts x end
         end,
       __LINE__ =>
-        Proc.new { |*args|
+        Proc.new { |arg|
           %w{a b}.map{|x| puts x }
         },
     # ////////////////////////////////////////////////////////////////////////
     # >> No newlining
     # ////////////////////////////////////////////////////////////////////////
       __LINE__ =>
-        lambda do |*args| %w{a b}.map do |x| puts x end end,
+        lambda do |arg| %w{a b}.map do |x| puts x end end,
       __LINE__ =>
-        lambda { |*args| %w{a b}.map{|x| puts x } },
+        lambda { |arg| %w{a b}.map{|x| puts x } },
       __LINE__ =>
-        proc do |*args| %w{a b}.map do |x| puts x end end,
+        proc do |arg| %w{a b}.map do |x| puts x end end,
       __LINE__ =>
-        lambda { |*args| %w{a b}.map{|x| puts x } },
+        lambda { |arg| %w{a b}.map{|x| puts x } },
       __LINE__ =>
-        Proc.new do |*args| %w{a b}.map do |x| puts x end end,
+        Proc.new do |arg| %w{a b}.map do |x| puts x end end,
       __LINE__ =>
-        Proc.new { |*args| %w{a b}.map{|x| puts x } },
+        Proc.new { |arg| %w{a b}.map{|x| puts x } },
     }
 
   should "handle block using do ... end [##{__LINE__}]" do
     (
-      SerializableProc.new do |*args|
+      SerializableProc.new do |arg|
         %w{a b}.map{|x| puts x }
       end
     ).should.be having_expected_attrs(expected_file, __LINE__ - 3, expected_code)
   end
 
   should "handle block using do ... end [##{__LINE__}]" do
-    (SerializableProc.new do |*args| %w{a b}.map{|x| puts x } end).
+    (SerializableProc.new do |arg| %w{a b}.map{|x| puts x } end).
       should.be having_expected_attrs(expected_file, __LINE__.pred, expected_code)
   end
 
   should "handle block using { ... } [##{__LINE__}]" do
     (
-      SerializableProc.new { |*args|
+      SerializableProc.new { |arg|
         %w{a b}.map{|x| puts x }
       }
     ).should.be having_expected_attrs(expected_file, __LINE__ - 3, expected_code)
   end
 
   should "handle block using { ... } [##{__LINE__}]" do
-    (SerializableProc.new { |*args| %w{a b}.map{|x| puts x } }).
+    (SerializableProc.new { |arg| %w{a b}.map{|x| puts x } }).
       should.be having_expected_attrs(expected_file, __LINE__.pred, expected_code)
   end
 
