@@ -5,6 +5,8 @@ require 'ruby_parser'
 
 class SerializableProc
 
+  class InvalidUsage < Exception ; end
+
   RUBY_PARSER = RubyParser.new
   RUBY_2_RUBY = Ruby2Ruby.new
 
@@ -15,8 +17,8 @@ class SerializableProc
 
   def initialize(&block)
     @proc = Proc.new(block)
-    @code, sexp = extract_code(Matcher.new(@proc))
-    @context = Context.new(sexp, block.binding)
+    @code, sexp = extract_code_and_sexp
+    # @context = Context.new(sexp, block.binding)
   end
 
   def ==(other)
@@ -37,16 +39,48 @@ class SerializableProc
 
   private
 
-    def extract_code(matcher)
-      code, remaining = matcher.code_args
-      while frag = matcher.next_frag(remaining)
-        begin
-          sexp = RUBY_PARSER.parse(escape_magic_vars(code += frag))
-          if matcher.matching_sexp?(sexp_str = sexp.inspect)
-            code = unescape_magic_vars(RUBY_2_RUBY.process(sexp)).sub('proc {','lambda {')
-            return [code, sexp_str]
+    def extract_sexp_and_marker
+      regexp = /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
+      raw_code = @proc.raw_code
+      frag1, frag2 = [(0 .. (@proc.line - 2)), (@proc.line.pred .. -1)].map{|r| raw_code[r].join }
+      match = frag2.match(regexp)[1]
+      marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
+        '__serializable_proc_marker__(__LINE__);'
+      [
+        RubyParser.new.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
+        marker
+      ]
+    end
+
+    def extract_code_and_sexp_args
+      raw_sexp, marker = extract_sexp_and_marker
+      regexp = Regexp.new([
+        '^(.*(',
+        Regexp.quote(
+          case marker
+          when /(SerializableProc|Proc)/ then "s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"
+          when /(proc|lambda)/ then "s(:iter, s(:call, nil, :#{$1}, s(:arglist"
+          else raise InvalidUsage
           end
-        rescue SyntaxError, Racc::ParseError, NoMethodError
+        ), '.*?',
+        Regexp.quote("s(:call, nil, :__serializable_proc_marker__, s(:arglist, s(:lit, #{@proc.line})))"),
+        '))(.*)$'
+      ].join, Regexp::MULTILINE)
+      raw_sexp.match(regexp)[2..3]
+    end
+
+    def extract_code_and_sexp
+      sexp, remaining = extract_code_and_sexp_args
+      while frag = remaining[/^([^\)]*\))/,1]
+        begin
+          return [
+            unescape_magic_vars(
+              Ruby2Ruby.new.process(eval(sexp += frag)).
+                sub(/(SerializableProc\.new|Proc\.new|proc)/m,'lambda').
+                sub(/__serializable_proc_marker__\(\d+\)\s*;?\s*\n?/m,'')
+            ), sexp
+          ]
+        rescue SyntaxError
           remaining.sub!(frag,'')
         end
       end
@@ -66,12 +100,15 @@ class SerializableProc
 
     class Proc
 
-      attr_reader :file, :line, :arity, :raw_code
+      attr_reader :file, :line, :arity
 
       def initialize(block)
         file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
         @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
-        @raw_code = File.readlines(@file)[@line.pred .. -1].join
+      end
+
+      def raw_code
+        File.readlines(@file)
       end
 
     end
@@ -89,70 +126,6 @@ class SerializableProc
           @hash.update(key => Marshal.load(Marshal.dump(val)))
         end
       end
-
-    end
-
-    class Matcher
-
-      def initialize(context)
-        @context = context
-      end
-
-      def code_args
-        ignore, start_marker, arg = [:ignore, :start_marker, :arg].map{|key| match_args[key] }
-        [
-          arg ? "proc #{start_marker} |#{arg}|" : "proc #{start_marker}",
-          @context.raw_code.sub(ignore, ''),
-        ]
-      end
-
-      def next_frag(str)
-        str[frag_regexp, 1]
-      end
-
-      def matching_sexp?(str)
-        str =~ sexp_regexp
-      end
-
-      private
-
-        def match_args
-          @match_args ||= (
-            args = @context.raw_code.match(code_regexp)
-            {
-              :ignore => args[1],
-              :start_marker => args[3],
-              :arg => args[5]
-            }
-          )
-        end
-
-        def sexp_regexp
-          @sexp_regexp ||= (
-            Regexp.new([
-              Regexp.quote("s(:iter, s(:call, nil, :"),
-              "(proc|lambda)",
-              Regexp.quote(", s(:arglist)), "),
-              '(%s|%s|%s)' % [
-                Regexp.quote('s(:masgn, s(:array, s('),
-                Regexp.quote('s(:lasgn, :'),
-                Regexp.quote('nil, s(')
-              ]
-            ].join)
-          )
-        end
-
-        def frag_regexp
-          @frag_regexp ||= (
-            end_marker = {'do' => 'end', '{' => '\}'}[match_args[:start_marker]]
-            /^(.*?\W#{end_marker})/m
-          )
-        end
-
-        def code_regexp
-          @code_regexp ||=
-            /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
-        end
 
     end
 
