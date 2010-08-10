@@ -33,6 +33,7 @@ class SerializableProc
   end
 
   def binding
+    # TODO: No idea on what meaningful stuff to return (yet).
     raise NotImplementedError
   end
 
