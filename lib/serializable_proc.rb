@@ -5,8 +5,9 @@ require 'ruby_parser'
 
 class SerializableProc
 
-  class InvalidUsageError   < Exception ; end
-  class NotImplementedError < Exception ; end
+  class InvalidUsageError            < Exception ; end
+  class NotImplementedError          < Exception ; end
+  class CannotSerializeVariableError < Exception ; end
 
   RUBY_PARSER = RubyParser.new
   RUBY_2_RUBY = Ruby2Ruby.new
@@ -17,8 +18,8 @@ class SerializableProc
   attr_reader :contexts
 
   def initialize(&block)
-    @proc = ProcLike.new(block)
-    @contexts = Context.new(@proc.sexp, block.binding).hash
+    @proc = Proc.new(block)
+    @contexts = Contexts.new(@proc.sexp, block.binding).hash
   end
 
   def ==(other)
@@ -43,7 +44,7 @@ class SerializableProc
 
   private
 
-    class Context
+    class Contexts
 
       attr_reader :hash
 
@@ -52,19 +53,23 @@ class SerializableProc
         while m = _sexp.match(/^(.*?s\(:(l|g|c|i)var, :([^\)]+)\))/)
           ignore, type, var = m[1..3]
           _sexp.sub!(ignore,'')
-          append(var, (eval(var, binding) rescue nil))
+          append(var, (binding.eval(var) rescue nil))
         end
       end
 
       private
 
         def append(var, val)
-          @hash.update(var.to_sym => Marshal.load(Marshal.dump(val)))
+          begin
+            @hash.update(var.to_sym => Marshal.load(Marshal.dump(val)))
+          rescue TypeError
+            raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
+          end
         end
 
     end
 
-    class ProcLike
+    class Proc
 
       attr_reader :file, :line, :code, :sexp
 
