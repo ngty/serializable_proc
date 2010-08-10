@@ -13,7 +13,7 @@ describe 'Marshalling' do
       true.should.be.true # the above should execute wo error
     end
 
-    should 'be able to resume proc behaviours after marshal' do
+    should 'be able to resume proc behaviours' do
       Marshal.load(Marshal.dump(@proc)).call.should.equal(%w{a b})
     end
 
