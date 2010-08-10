@@ -5,7 +5,8 @@ require 'ruby_parser'
 
 class SerializableProc
 
-  class InvalidUsageError < Exception ; end
+  class InvalidUsageError   < Exception ; end
+  class NotImplementedError < Exception ; end
 
   RUBY_PARSER = RubyParser.new
   RUBY_2_RUBY = Ruby2Ruby.new
@@ -31,6 +32,10 @@ class SerializableProc
 
   def to_proc
     eval(code, nil, file, line)
+  end
+
+  def binding
+    raise NotImplementedError
   end
 
   alias_method :[], :call

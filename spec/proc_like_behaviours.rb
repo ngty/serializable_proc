@@ -56,7 +56,10 @@ describe 'Proc like behaviours' do
   end
 
   describe '>> binding' do
-    should 'return a binding'
+    should 'raise SerializableProc::NotImplementedError' do
+      lambda { SerializableProc.new { 'a' }.binding }.
+        should.raise(SerializableProc::NotImplementedError)
+    end
   end
 
   describe '>> to_proc' do
