@@ -5,8 +5,8 @@ require 'ruby_parser'
 
 class SerializableProc
 
-  class InvalidUsageError            < Exception ; end
   class NotImplementedError          < Exception ; end
+  class CannotInitializeError        < Exception ; end
   class CannotSerializeVariableError < Exception ; end
 
   extend Forwardable
@@ -76,7 +76,7 @@ class SerializableProc
       def initialize(block)
         file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
         @file, @line = File.expand_path(file), line.to_i
-        initialize_code_and_sexp rescue raise(InvalidUsageError)
+        initialize_code_and_sexp
       end
 
       private
@@ -118,9 +118,15 @@ class SerializableProc
           regexp = /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
           raw = raw_code
           frag1, frag2 = [(0 .. (line - 2)), (line.pred .. -1)].map{|r| raw[r].join }
-          match = frag2.match(regexp)[1]
+          match, type = frag2.match(regexp)[1..2]
           marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
             '__serializable_proc_marker__(__LINE__);'
+
+          if raw[line.pred].split(type).size > 2
+            raise CannotInitializeError.new \
+              "Static code analysis can only handle single occurrence of '#{type}' per line !!"
+          end
+
           [
             RUBY_PARSER.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
             marker

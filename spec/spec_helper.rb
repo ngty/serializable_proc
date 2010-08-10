@@ -40,6 +40,14 @@ class SerializableProc
         end
       end
 
+      def raising_cannot_initialize_error(name)
+        lambda do |block|
+          block.should.raise(SerializableProc::CannotInitializeError).message.should.
+          equal("Static code analysis can only handle single occurrence of '#{name}' per line !!")
+          true
+        end
+      end
+
     end
 
     module Macros
