@@ -36,8 +36,6 @@ class SerializableProc
 
     module Macros
 
-      include Matchers
-
       def should_have_expected_contexts(s_proc, expected)
         s_proc.contexts.should.equal(expected)
         expected.each do |key, val|
@@ -56,6 +54,11 @@ class SerializableProc
         end
       end
 
+    end
+
+    module Helpers
+      include Macros
+      include Matchers
     end
 
   end

@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe 'One arity serializable proc' do
 
-  extend SerializableProc::Spec::Macros
+  extend SerializableProc::Spec::Helpers
 
   expected_file = File.expand_path(__FILE__)
   expected_code = "lambda { |arg| [\"a\", \"b\"].map { |x| puts(x) } }"

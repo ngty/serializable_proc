@@ -9,8 +9,7 @@ describe 'Contextual references' do
 
   describe '>> assigning local variables' do
 
-    extend SerializableProc::Spec::Matchers
-    extend SerializableProc::Spec::Macros
+    extend SerializableProc::Spec::Helpers
 
     should "handle outer-scoped ones" do
       x, y = 'awe', 'some'
@@ -33,8 +32,7 @@ describe 'Contextual references' do
 
   describe '>> assigning instance variables' do
 
-    extend SerializableProc::Spec::Matchers
-    extend SerializableProc::Spec::Macros
+    extend SerializableProc::Spec::Helpers
 
     should 'handle outer-scoped ones' do
       @x, @y = 'awe', 'some'
@@ -57,8 +55,7 @@ describe 'Contextual references' do
 
   describe '>> assigning class variables' do
 
-    extend SerializableProc::Spec::Matchers
-    extend SerializableProc::Spec::Macros
+    extend SerializableProc::Spec::Helpers
 
     should 'handle outer-scoped ones' do
       @@x, @@y = 'awe', 'some'
@@ -81,8 +78,7 @@ describe 'Contextual references' do
 
   describe '>> assigning global variables' do
 
-    extend SerializableProc::Spec::Matchers
-    extend SerializableProc::Spec::Macros
+    extend SerializableProc::Spec::Helpers
 
     should 'handle outer-scoped ones' do
       $x, $y = 'awe', 'some'
@@ -103,7 +99,7 @@ describe 'Contextual references' do
 
   end
 
-  describe '>> assigning method calls' do
+  describe '>> assigning method returns' do
     should "not handle" do
       SerializableProc.new { m1 + m2(3) }.contexts.should.be.empty
     end
