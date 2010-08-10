@@ -5,20 +5,18 @@ require 'ruby_parser'
 
 class SerializableProc
 
-  class InvalidUsage < Exception ; end
+  class InvalidUsageError < Exception ; end
 
   RUBY_PARSER = RubyParser.new
   RUBY_2_RUBY = Ruby2Ruby.new
 
   extend Forwardable
-  %w{line file arity}.each{|meth| def_delegator :@proc, meth.to_sym }
+  %w{line file code}.each{|meth| def_delegator :@proc, meth.to_sym }
 
-  attr_reader :code, :context
+  attr_reader :context
 
   def initialize(&block)
-    @proc = Proc.new(block)
-    @code, sexp = extract_code_and_sexp
-    # @context = Context.new(sexp, block.binding)
+    @proc = ProcLike.new(block)
   end
 
   def ==(other)
@@ -31,87 +29,13 @@ class SerializableProc
   end
 
   def to_proc
-    eval(@code, nil, file, line)
+    eval(code, nil, file, line)
   end
 
   alias_method :[], :call
   alias_method :to_s, :code
 
   private
-
-    def extract_sexp_and_marker
-      regexp = /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
-      raw_code = @proc.raw_code
-      frag1, frag2 = [(0 .. (@proc.line - 2)), (@proc.line.pred .. -1)].map{|r| raw_code[r].join }
-      match = frag2.match(regexp)[1]
-      marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
-        '__serializable_proc_marker__(__LINE__);'
-      [
-        RubyParser.new.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
-        marker
-      ]
-    end
-
-    def extract_code_and_sexp_args
-      raw_sexp, marker = extract_sexp_and_marker
-      regexp = Regexp.new([
-        '^(.*(',
-        Regexp.quote(
-          case marker
-          when /(SerializableProc|Proc)/ then "s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"
-          when /(proc|lambda)/ then "s(:iter, s(:call, nil, :#{$1}, s(:arglist"
-          else raise InvalidUsage
-          end
-        ), '.*?',
-        Regexp.quote("s(:call, nil, :__serializable_proc_marker__, s(:arglist, s(:lit, #{@proc.line})))"),
-        '))(.*)$'
-      ].join, Regexp::MULTILINE)
-      raw_sexp.match(regexp)[2..3]
-    end
-
-    def extract_code_and_sexp
-      sexp, remaining = extract_code_and_sexp_args
-      while frag = remaining[/^([^\)]*\))/,1]
-        begin
-          return [
-            unescape_magic_vars(
-              Ruby2Ruby.new.process(eval(sexp += frag)).
-                sub(/(SerializableProc\.new|Proc\.new|proc)/m,'lambda').
-                sub(/__serializable_proc_marker__\(\d+\)\s*;?\s*\n?/m,'')
-            ), sexp
-          ]
-        rescue SyntaxError
-          remaining.sub!(frag,'')
-        end
-      end
-    end
-
-    def escape_magic_vars(code)
-      %w{__FILE__ __LINE__}.inject(code) do |code, var|
-        code.gsub(var, "%|((#{var}))|")
-      end
-    end
-
-    def unescape_magic_vars(code)
-      %w{__FILE__ __LINE__}.inject(code) do |code, var|
-        code.gsub(%|"((#{var}))"|, var)
-      end
-    end
-
-    class Proc
-
-      attr_reader :file, :line, :arity
-
-      def initialize(block)
-        file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
-        @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
-      end
-
-      def raw_code
-        File.readlines(@file)
-      end
-
-    end
 
     class Context
 
@@ -126,6 +50,78 @@ class SerializableProc
           @hash.update(key => Marshal.load(Marshal.dump(val)))
         end
       end
+
+    end
+
+    class ProcLike
+
+      attr_reader :file, :line, :code, :sexp
+
+      def initialize(block)
+        file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
+        @file, @line = File.expand_path(file), line.to_i
+        initialize_code_and_sexp rescue raise(InvalidUsageError)
+      end
+
+      private
+
+        def initialize_code_and_sexp
+          sexp, remaining = extract_sexp_args
+          while frag = remaining[/^([^\)]*\))/,1]
+            begin
+              @sexp, @code = [
+                sexp, unescape_magic_vars(
+                  RUBY_2_RUBY.process(eval(sexp += frag)).
+                    sub(/(SerializableProc\.new|Proc\.new|proc)/m,'lambda').
+                    sub(/__serializable_proc_marker__\(\d+\)\s*;?\s*\n?/m,'')
+                )
+              ]
+            rescue SyntaxError
+              remaining.sub!(frag,'')
+            end
+          end
+        end
+
+        def extract_sexp_args
+          raw, marker = raw_sexp_and_marker
+          regexp = Regexp.new([
+            '^(.*(',
+            Regexp.quote(
+              case marker
+              when /(SerializableProc|Proc)/ then "s(:iter, s(:call, s(:const, :#{$1}), :new, s(:arglist)),"
+              when /(proc|lambda)/ then "s(:iter, s(:call, nil, :#{$1}, s(:arglist"
+              end
+            ), '.*?',
+            Regexp.quote("s(:call, nil, :__serializable_proc_marker__, s(:arglist, s(:lit, #{line})))"),
+            '))(.*)$'
+          ].join, Regexp::MULTILINE)
+          raw.match(regexp)[2..3]
+        end
+
+        def raw_sexp_and_marker
+          regexp = /^(.*?(SerializableProc\.new|lambda|proc|Proc\.new)?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
+          raw = raw_code
+          frag1, frag2 = [(0 .. (line - 2)), (line.pred .. -1)].map{|r| raw[r].join }
+          match = frag2.match(regexp)[1]
+          marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
+            '__serializable_proc_marker__(__LINE__);'
+          [
+            RUBY_PARSER.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
+            marker
+          ]
+        end
+
+        def escape_magic_vars(s)
+          %w{__FILE__ __LINE__}.inject(s){|s, var| s.gsub(var, "%|((#{var}))|") }
+        end
+
+        def unescape_magic_vars(s)
+          %w{__FILE__ __LINE__}.inject(s){|s, var| s.gsub(%|"((#{var}))"|, var) }
+        end
+
+        def raw_code
+          File.readlines(@file)
+        end
 
     end
 
