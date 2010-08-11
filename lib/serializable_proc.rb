@@ -50,12 +50,8 @@ class SerializableProc
       alias_method :_instance_exec, :instance_exec
 
       def initialize(sexp, binding, rklass)
-        @hash, @rklass, _sexp = {}, rklass, sexp.dup
-        while m = _sexp.match(/^(.*?s\(:(l|g|c|i)var, :([^\)]+)\))/)
-          ignore, type, var = m[1..3]
-          _sexp.sub!(ignore,'')
-          append(var, (binding.eval(var) rescue nil))
-        end
+        @rklass = rklass
+        initialize_hash(sexp, binding)
       end
 
       def instance_exec(*args, &block)
@@ -76,11 +72,17 @@ class SerializableProc
           )
         end
 
-        def append(var, val)
-          begin
-            @hash.update(var.to_sym => Marshal.load(Marshal.dump(val)))
-          rescue TypeError
-            raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
+        def initialize_hash(sexp, binding)
+          @hash = {}
+          while m = sexp.match(/^(.*?s\(:(l|g|c|i)var, :([^\)]+)\))/)
+            ignore, type, var = m[1..3]
+            sexp.sub!(ignore,'')
+            begin
+              val = binding.eval(var) rescue nil
+              @hash.update(var.to_sym => Marshal.load(Marshal.dump(val)))
+            rescue TypeError
+              raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
+            end
           end
         end
 
