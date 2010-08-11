@@ -36,20 +36,20 @@ class SerializableProc
       end
 
       def instance_exec(*args, &block)
-        within_set_globals{ instance.instance_exec(*args, &block) }
+        backup_globals
+        instance.instance_exec(*args, &block) ensure revert_globals
       end
 
       private
 
         def instance
           @instance ||= (
-            vars = {:c => /^@@/, :i => /^@[^@]/, :l => /^[^@\$]/}.
-              inject({}){|memo, (t,r)| memo.merge(t => @hash.select{|k,v| k.to_s =~ r }) }
-            object = Class.new {
+            cvars, ivars, lvars = [/^@@/, /^@[^@]/, /^[^@\$]/].map{|r| @hash.select{|k,_| k.to_s =~ r }}
+            Class.new {
               klass = RUBY_VERSION.include?('1.9') ? SerializableProc::Contexts : self
-              vars[:l].each{|var, val| define_method(var){ val } }
-              vars[:c].each{|var, val| klass.send(:class_variable_set, var, val) }
-              define_method(:initialize){ vars[:i].each{|var, val| instance_variable_set(var, val) } }
+              lvars.each{|var, val| define_method(var){ val } }
+              cvars.each{|var, val| klass.send(:class_variable_set, var, val) }
+              define_method(:initialize){ ivars.each{|var, val| instance_variable_set(var, val) } }
             }.new
           )
         end
@@ -66,11 +66,6 @@ class SerializableProc
               raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
             end
           end
-        end
-
-        def within_set_globals(&block)
-          backup_globals
-          yield ensure revert_globals
         end
 
         def backup_globals
