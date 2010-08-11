@@ -1,13 +1,12 @@
 require 'rubygems'
 require 'forwardable'
-require 'ruby2ruby'
-require 'ruby_parser'
 
 class SerializableProc
 
   class NotImplementedError          < Exception ; end
   class CannotInitializeError        < Exception ; end
   class CannotSerializeVariableError < Exception ; end
+  class GemNotInstalledError         < Exception ; end
 
   extend Forwardable
   %w{== to_proc to_s}.each{|meth| def_delegator :@proc, meth.to_sym }
@@ -97,7 +96,7 @@ class SerializableProc
       def initialize(block, owner)
         file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
         @klass, @file, @line = owner.class, File.expand_path(file), line.to_i
-        @code, @sexp = RubyParser.process(@klass, @file, @line)
+        @code, @sexp = ParseTree.process(block) || RubyParser.process(@klass, @file, @line)
       end
 
       def ==(other)
@@ -119,24 +118,42 @@ class SerializableProc
 
     end
 
+    class ParseTree #:nodoc:
+      class << self
+        def process(block)
+          begin
+            require 'parse_tree'
+            require 'parse_tree_extensions'
+            [block.to_ruby, block.to_sexp]
+          rescue LoadError
+            nil
+          end
+        end
+      end
+    end
+
     class RubyParser #:nodoc:
-
-      RUBY_2_RUBY = Ruby2Ruby.new
-
       class << self
 
         def process(klass, file, line)
-          @klass, @file, @line = klass, file, line
           initialize_parser
+          @klass, @file, @line = klass, file, line
           extract_code_and_sexp
         end
 
         private
 
           def initialize_parser
-            if !self.class.const_defined?(:RUBY_PARSER)
-              require 'ruby_parser'
-              self.class.const_set(:RUBY_PARSER, ::RubyParser.new)
+            begin
+              self.class.instance_eval do
+                require 'ruby_parser'
+                require 'ruby2ruby'
+                const_set(:RUBY_2_RUBY, ::Ruby2Ruby.new) unless const_defined?(:RUBY_2_RUBY)
+                const_set(:RUBY_PARSER, ::RubyParser.new) unless const_defined?(:RUBY_PARSER)
+              end
+            rescue LoadError
+              raise GemNotInstalledError.new \
+                "SerializableProc requires ParseTree (faster) or RubyParser & Ruby2Ruby to work its magic !!"
             end
           end
 

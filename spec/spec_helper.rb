@@ -1,12 +1,22 @@
 require 'rubygems'
 require 'bacon'
 require 'tempfile'
+require 'ruby_parser'
+require 'ruby2ruby'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'serializable_proc'
 
 Bacon.summary_on_exit
+
+$has_parse_tree =
+  begin
+    require 'parse_tree'
+    true
+  rescue LoadError
+    nil
+  end
 
 class SerializableProc
 
