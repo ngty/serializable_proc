@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-describe 'Proc like behaviours' do
+describe 'Being proc like' do
 
   describe '>> ==' do
 
