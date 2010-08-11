@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'forwardable'
+require 'ruby2ruby'
 
 class SerializableProc
 
@@ -142,7 +143,6 @@ class SerializableProc
             begin
               self.class.instance_eval do
                 require 'ruby_parser'
-                require 'ruby2ruby'
                 const_set(:RUBY_2_RUBY, ::Ruby2Ruby.new) unless const_defined?(:RUBY_2_RUBY)
                 const_set(:RUBY_PARSER, ::RubyParser.new) unless const_defined?(:RUBY_PARSER)
               end
