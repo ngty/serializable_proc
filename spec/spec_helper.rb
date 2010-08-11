@@ -10,8 +10,9 @@ Bacon.summary_on_exit
 
 class SerializableProc
 
-  # Just to make testing easier ..
-  public :code, :line, :file, :contexts
+  attr_reader :proc, :contexts
+  class Proc ; attr_reader :file, :code, :line ; end
+  class Contexts ; attr_reader :hash ; end
 
   module Spec
 
@@ -26,11 +27,12 @@ class SerializableProc
         lambda {|o1| o1.object_id == o2.object_id }
       end
 
-      def having_expected_attrs(file, line, code)
+      def having_expected_proc_attrs(file, line, code)
         lambda do |s_proc|
-          s_proc.code.should.be having_same_semantics_as(code)
-          s_proc.file.should.equal(file)
-          s_proc.line.should.equal(line)
+          base_proc = s_proc.proc
+          base_proc.code.should.be having_same_semantics_as(code)
+          base_proc.file.should.equal(file)
+          base_proc.line.should.equal(line)
         end
       end
 
@@ -64,10 +66,10 @@ class SerializableProc
       def should_handle_proc_variable(file, code, test_args)
         test_args.each do |line, block|
           should "handle proc variable [##{line}]" do
-            s_proc = SerializableProc.new(&block)
-            s_proc.code.should.be having_same_semantics_as(code)
-            s_proc.file.should.equal(file)
-            s_proc.line.should.equal(line.succ)
+            base_proc = SerializableProc.new(&block).proc
+            base_proc.code.should.be having_same_semantics_as(code)
+            base_proc.file.should.equal(file)
+            base_proc.line.should.equal(line.succ)
           end
         end
       end

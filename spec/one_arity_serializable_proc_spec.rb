@@ -96,12 +96,12 @@ describe 'One arity serializable proc' do
       SerializableProc.new do |arg|
         %w{a b}.map{|x| puts x }
       end
-    ).should.be having_expected_attrs(expected_file, __LINE__ - 3, expected_code)
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
   end
 
   should "handle block using do ... end [##{__LINE__}]" do
     (SerializableProc.new do |arg| %w{a b}.map{|x| puts x } end).
-      should.be having_expected_attrs(expected_file, __LINE__.pred, expected_code)
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
   end
 
   should "handle block using { ... } [##{__LINE__}]" do
@@ -109,12 +109,12 @@ describe 'One arity serializable proc' do
       SerializableProc.new { |arg|
         %w{a b}.map{|x| puts x }
       }
-    ).should.be having_expected_attrs(expected_file, __LINE__ - 3, expected_code)
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
   end
 
   should "handle block using { ... } [##{__LINE__}]" do
     (SerializableProc.new { |arg| %w{a b}.map{|x| puts x } }).
-      should.be having_expected_attrs(expected_file, __LINE__.pred, expected_code)
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
   end
 
 end
