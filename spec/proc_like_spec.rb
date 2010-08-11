@@ -31,54 +31,76 @@ describe 'Being proc like' do
       s_proc[].should.equal(expected)
     end
 
-    should 'return yield result given arg' do
-      s_proc = SerializableProc.new {|n| %w{b c}.map{|x| x * n } }
-      expected = %w{bb cc}
-      s_proc.call(2).should.equal(expected)
-      s_proc[2].should.equal(expected)
-    end
-
-    should 'reflect bound local variable' do
+    should 'reflect bound instance variable value (unaffected by outside-scope change)' do
       x, y = 'awe', 'some'
-      s_proc = SerializableProc.new { x + y }
-      expected = x + y
+      expected = 'hand' + y
+      s_proc = SerializableProc.new { x.sub!('awe','hand'); x + y }
+      x, y = 'wonder', 'ful'
       s_proc.call.should.equal(expected)
       s_proc[].should.equal(expected)
     end
 
-    should 'reflect bound instance variable' do
+    should 'not affect any outside-scope change to instance variable' do
+      x, y = 'awe', 'some'
+      s_proc = SerializableProc.new { x.sub!('awe','hand'); x + y }
+      x, y = 'wonder', 'ful'
+      s_proc.call ; s_proc[]
+      x.should.equal('wonder')
+      y.should.equal('ful')
+    end
+
+    should 'reflect bound instance variable value (unaffected by outside-scope change)' do
       @x, @y = 'awe', 'some'
-      s_proc = SerializableProc.new { @x + @y }
-      expected = @x + @y
+      expected = 'hand' + @y
+      s_proc = SerializableProc.new { @x.sub!('awe','hand'); @x + @y }
+      @x, @y = 'wonder', 'ful'
       s_proc.call.should.equal(expected)
       s_proc[].should.equal(expected)
     end
 
-    should 'reflect bound class variable' do
+    should 'not affect any outside-scope change to instance variable' do
+      @x, @y = 'awe', 'some'
+      s_proc = SerializableProc.new { @x.sub!('awe','hand'); @x + @y }
+      @x, @y = 'wonder', 'ful'
+      s_proc.call ; s_proc[]
+      @x.should.equal('wonder')
+      @y.should.equal('ful')
+    end
+
+    should 'reflect bound class variable value (unaffected by outside-scope change)' do
       @@x, @@y = 'awe', 'some'
-      s_proc = SerializableProc.new { @@x + @@y }
-      expected = @@x + @@y
+      expected = 'hand' + @@y
+      s_proc = SerializableProc.new { @@x.sub!('awe','hand'); @@x + @@y }
+      @@x, @@y = 'wonder', 'ful'
       s_proc.call.should.equal(expected)
       s_proc[].should.equal(expected)
     end
 
-    should 'reflect bound global variable' do
+    should 'not affect any outside-scope change to class variable' do
+      @@x, @@y = 'awe', 'some'
+      s_proc = SerializableProc.new { @@x.sub!('awe','hand'); @@x + @@y }
+      @@x, @@y = 'wonder', 'ful'
+      s_proc.call ; s_proc[]
+      @@x.should.equal('wonder')
+      @@y.should.equal('ful')
+    end
+
+    should 'reflect bound global variable value (unaffected by outside-scope change)' do
       $x, $y = 'awe', 'some'
-      expected = $x + $y
-      s_proc = SerializableProc.new { $x + $y }
+      expected = 'hand' + $y
+      s_proc = SerializableProc.new { $x.sub!('awe','hand'); $x + $y }
       $x, $y = 'wonder', 'ful'
       s_proc.call.should.equal(expected)
       s_proc[].should.equal(expected)
     end
 
-    should 'not affect any globals' do
+    should 'not affect any outside-scope change to global variable' do
       $x, $y = 'awe', 'some'
-      s_proc = SerializableProc.new { $x + $y }
+      s_proc = SerializableProc.new { $x.sub!('awe','hand'); $x + $y }
       $x, $y = 'wonder', 'ful'
       s_proc.call ; s_proc[]
       $x.should.equal('wonder')
       $y.should.equal('ful')
-
     end
 
   end
@@ -93,9 +115,12 @@ describe 'Being proc like' do
   end
 
   describe '>> binding' do
-    should 'raise SerializableProc::NotImplementedError' do
-      lambda { SerializableProc.new { 'a' }.binding }.
-        should.raise(SerializableProc::NotImplementedError)
+    should 'return binding that contains duplicated contextual reference values' do
+      x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+      expected = {'x' => x.dup, '@x' => @x.dup, '@@x' => @@x.dup, '$x' => $x.dup}
+      s_proc = SerializableProc.new { [x, @x, @@x, $x] }
+      x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
+      expected.each{|k,v| s_proc.binding.eval(k).should.equal(v) }
     end
   end
 

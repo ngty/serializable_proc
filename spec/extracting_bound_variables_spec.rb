@@ -13,12 +13,12 @@ describe 'Extracting bound variables' do
 
     should "handle outer-scoped ones" do
       x, y = 'awe', 'some'
-      should_have_expected_contexts SerializableProc.new{ x + y }, {:x => x, :y => y}
+      should_have_expected_binding SerializableProc.new{ x + y }, {:x => x, :y => y}
     end
 
     should "handle inner-scoped ones" do
       x, y = 'awe', 'some'
-      should_have_expected_contexts \
+      should_have_expected_binding \
         SerializableProc.new{|x| z = 'wonder' ; %w{a b}.each{|y| puts z, x, y } },
         {:x => x, :y => y, :z => nil}
     end
@@ -33,12 +33,12 @@ describe 'Extracting bound variables' do
 
     should 'handle outer-scoped ones' do
       @x, @y = 'awe', 'some'
-      should_have_expected_contexts SerializableProc.new{ @x + @y }, {:@x => @x, :@y => @y}
+      should_have_expected_binding SerializableProc.new{ @x + @y }, {:@x => @x, :@y => @y}
     end
 
     should "handle inner-scoped ones" do
       @x, @y = 'awe', 'some'
-      should_have_expected_contexts \
+      should_have_expected_binding \
         SerializableProc.new{ @z = 'wonder' ; %w{a b}.each{ puts @z, @x, @y } },
         {:@x => @x, :@y => @y, :@z => nil}
     end
@@ -53,12 +53,12 @@ describe 'Extracting bound variables' do
 
     should 'handle outer-scoped ones' do
       @@x, @@y = 'awe', 'some'
-      should_have_expected_contexts SerializableProc.new{ @@x + @@y }, {:@@x => @@x, :@@y => @@y}
+      should_have_expected_binding SerializableProc.new{ @@x + @@y }, {:@@x => @@x, :@@y => @@y}
     end
 
     should "handle inner-scoped ones" do
       @@x, @@y = 'awe', 'some'
-      should_have_expected_contexts \
+      should_have_expected_binding \
         SerializableProc.new{ @@z = 'wonder' ; %w{a b}.each{ puts @@z, @@x, @@y } },
         {:@@x => @@x, :@@y => @@y, :@@z => nil}
     end
@@ -73,12 +73,12 @@ describe 'Extracting bound variables' do
 
     should 'handle outer-scoped ones' do
       $x, $y = 'awe', 'some'
-      should_have_expected_contexts SerializableProc.new{ $x + $y }, {:$x => $x, :$y => $y}
+      should_have_expected_binding SerializableProc.new{ $x + $y }, {:$x => $x, :$y => $y}
     end
 
     should "handle inner-scoped ones" do
       $x, $y = 'awe', 'some'
-      should_have_expected_contexts \
+      should_have_expected_binding \
         SerializableProc.new{ $z = 'wonder' ; %w{a b}.each{ puts $z, $x, $y } },
         {:$x => $x, :$y => $y, :$z => nil}
     end
@@ -89,7 +89,7 @@ describe 'Extracting bound variables' do
 
   describe '>> extracting method returns' do
     should "not handle" do
-      SerializableProc.new { m1 + m2(3) }.contexts.hash.should.be.empty
+      SerializableProc.new { m1 + m2(3) }.binding_dump.should.be.empty
     end
   end
 
