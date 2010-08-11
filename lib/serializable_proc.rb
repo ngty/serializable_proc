@@ -47,7 +47,6 @@ class SerializableProc
     class Contexts #:nodoc#
 
       attr_reader :hash
-      alias_method :_instance_exec, :instance_exec
 
       def initialize(sexp, binding, rklass)
         @rklass = rklass
@@ -65,8 +64,9 @@ class SerializableProc
             vars = {:c => /^@@/, :i => /^@[^@]/, :l => /^[^@\$]/}.
               inject({}){|memo, (t,r)| memo.merge(t => @hash.select{|k,v| k.to_s =~ r }) }
             object = Class.new {
+              klass = RUBY_VERSION.include?('1.9') ? SerializableProc::Contexts : self
               vars[:l].each{|var, val| define_method(var){ val } }
-              vars[:c].each{|var, val| class_variable_set(var, val) }
+              vars[:c].each{|var, val| klass.send(:class_variable_set, var, val) }
               define_method(:initialize){ vars[:i].each{|var, val| instance_variable_set(var, val) } }
             }.new
           )

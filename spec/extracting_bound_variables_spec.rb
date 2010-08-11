@@ -39,7 +39,7 @@ describe 'Extracting bound variables' do
     should "handle inner-scoped ones" do
       @x, @y = 'awe', 'some'
       should_have_expected_contexts \
-        SerializableProc.new{|@x| @z = 'wonder' ; %w{a b}.each{|@y| puts @z, @x, @y } },
+        SerializableProc.new{ @z = 'wonder' ; %w{a b}.each{ puts @z, @x, @y } },
         {:@x => @x, :@y => @y, :@z => nil}
     end
 
@@ -59,7 +59,7 @@ describe 'Extracting bound variables' do
     should "handle inner-scoped ones" do
       @@x, @@y = 'awe', 'some'
       should_have_expected_contexts \
-        SerializableProc.new{|@@x| @@z = 'wonder' ; %w{a b}.each{|@@y| puts @@z, @@x, @@y } },
+        SerializableProc.new{ @@z = 'wonder' ; %w{a b}.each{ puts @@z, @@x, @@y } },
         {:@@x => @@x, :@@y => @@y, :@@z => nil}
     end
 
@@ -79,7 +79,7 @@ describe 'Extracting bound variables' do
     should "handle inner-scoped ones" do
       $x, $y = 'awe', 'some'
       should_have_expected_contexts \
-        SerializableProc.new{|$x| $z = 'wonder' ; %w{a b}.each{|$y| puts $z, $x, $y } },
+        SerializableProc.new{ $z = 'wonder' ; %w{a b}.each{ puts $z, $x, $y } },
         {:$x => $x, :$y => $y, :$z => nil}
     end
 
