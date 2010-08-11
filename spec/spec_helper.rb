@@ -1,22 +1,22 @@
 require 'rubygems'
 require 'bacon'
 require 'tempfile'
-require 'ruby_parser'
 require 'ruby2ruby'
+
+$parse_tree_installed =
+  begin
+    require 'parse_tree'
+    true
+  rescue LoadError
+    require 'ruby_parser'
+    nil
+  end
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'serializable_proc'
 
 Bacon.summary_on_exit
-
-$has_parse_tree =
-  begin
-    require 'parse_tree'
-    true
-  rescue LoadError
-    nil
-  end
 
 class SerializableProc
 
@@ -29,7 +29,11 @@ class SerializableProc
     module Matchers
 
       def having_same_semantics_as(code2)
-        normalize = lambda {|code| ::Ruby2Ruby.new.process(::RubyParser.new.parse(code2)) }
+        to_code = lambda{|sexp| ::Ruby2Ruby.new.process(sexp) }
+        to_sexp = $parse_tree_installed ?
+          lambda{|code| Unifier.new.process(::ParseTree.translate(code)) } :
+          lambda{|code| ::RubyParser.new.parse(code) }
+        normalize = lambda{|code| to_code[to_sexp[code]].sub('lambda','proc') }
         lambda {|code1| normalize[code1].should.equal(normalize[code2]) }
       end
 

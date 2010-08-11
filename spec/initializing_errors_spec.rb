@@ -2,7 +2,7 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe 'Initializing errors' do
 
-  unless $has_parse_tree
+  unless $parse_tree_installed
     describe '>> SerializableProc::CannotInitializeError' do
 
       extend SerializableProc::Spec::Helpers
