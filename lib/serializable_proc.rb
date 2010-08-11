@@ -66,13 +66,12 @@ class SerializableProc
 
         def instance
           @instance ||= (
-            class_vars = @hash.select{|k,v| k.to_s =~ /^@@/ }
-            instance_vars = @hash.select{|k,v| k.to_s =~ /^@[^@]/ }
-            local_vars = @hash.select{|k,v| k.to_s =~ /^[^@\$]/ }
+            vars = {:c => /^@@/, :i => /^@[^@]/, :l => /^[^@\$]/}.
+              inject({}){|memo, (t,r)| memo.merge(t => @hash.select{|k,v| k.to_s =~ r }) }
             object = Class.new {
-              local_vars.each{|var, val| define_method(var){ val } }
-              class_vars.each{|var, val| class_variable_set(var, val) }
-              define_method(:initialize){ instance_vars.each{|var, val| instance_variable_set(var, val) } }
+              vars[:l].each{|var, val| define_method(var){ val } }
+              vars[:c].each{|var, val| class_variable_set(var, val) }
+              define_method(:initialize){ vars[:i].each{|var, val| instance_variable_set(var, val) } }
             }.new
           )
         end
