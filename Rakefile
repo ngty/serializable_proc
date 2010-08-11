@@ -5,15 +5,24 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "serializable_proc"
-    gem.summary = %Q{Proc that can be serialized}
-    gem.description = %Q{Give & take, serializing a ruby proc is possible, though not a perfect one.}
+    gem.summary = %Q{Proc that can be serialized (as the name suggests)}
+    gem.description = %Q{
+      Give & take, serializing a ruby proc is possible, though not a perfect one.
+      Requires either ParseTree (faster) or RubyParser (& Ruby2Ruby).
+    }
     gem.email = "ngty77@gmail.com"
     gem.homepage = "http://github.com/ngty/serializable_proc"
     gem.authors = ["NgTzeYang"]
     gem.add_development_dependency "bacon", ">= 0"
-    gem.add_dependency 'ruby_parser', '>= 2.0.4'
-    gem.add_dependency 'ruby2ruby', '>= 1.2.4'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+
+    if RUBY_PLATFORM =~ /java/i or RUBY_VERSION =~ /1\.9\./
+      gem.add_dependency "ruby_parser", ">= 2.0.4"
+      gem.add_dependency "ruby2ruby", ">= 1.2.4"
+    else
+      gem.add_dependency "ParseTree", ">= 3.0.5"
+      gem.add_development_dependency "ruby2ruby", ">= 1.2.4"
+    end
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
