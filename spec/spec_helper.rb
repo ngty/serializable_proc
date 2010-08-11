@@ -19,7 +19,7 @@ class SerializableProc
     module Matchers
 
       def having_same_semantics_as(code2)
-        normalize = lambda {|code| Ruby2Ruby.new.process(RubyParser.new.parse(code2)) }
+        normalize = lambda {|code| ::Ruby2Ruby.new.process(::RubyParser.new.parse(code2)) }
         lambda {|code1| normalize[code1].should.equal(normalize[code2]) }
       end
 
