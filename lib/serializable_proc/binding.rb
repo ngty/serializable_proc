@@ -24,8 +24,29 @@ class SerializableProc
     def eval!
       @binding ||= (
         set_vars = @vars.map{|(k,v)| "#{k} = Marshal.load(%|#{mdump(v)}|)" } * '; '
-        (binding = Kernel.binding).eval(set_vars) ; binding
+        (binding = Kernel.binding).eval(set_vars)
+        binding.extend(Extensions)
       )
+    end
+
+    module Extensions
+      def self.extended(base)
+        class << base
+
+          alias_method :orig_eval, :eval
+
+          def eval(str)
+            begin
+              @fvar = Sandboxer.fvar(str).to_s
+              orig_eval(@fvar)
+            rescue NameError => e
+              msg = e.message.sub(@fvar, str)
+              raise NameError.new(msg)
+            end
+          end
+
+        end
+      end
     end
 
   end
