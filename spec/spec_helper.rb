@@ -23,7 +23,7 @@ class SerializableProc
   attr_reader :code, :file, :line
 
   def binding_dump
-    @binding.instance_variable_get(:@hash)
+    @binding.instance_variable_get(:@vars)
   end
 
   module Spec

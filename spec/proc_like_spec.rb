@@ -117,7 +117,7 @@ describe 'Being proc like' do
   describe '>> binding' do
     should 'return binding that contains duplicated contextual reference values' do
       x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
-      expected = {'x' => x.dup, '@x' => @x.dup, '@@x' => @@x.dup, '$x' => $x.dup}
+      expected = {'lvar_x' => x.dup, 'ivar_x' => @x.dup, 'cvar_x' => @@x.dup, 'gvar_x' => $x.dup}
       s_proc = SerializableProc.new { [x, @x, @@x, $x] }
       x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
       expected.each{|k,v| s_proc.binding.eval(k).should.equal(v) }

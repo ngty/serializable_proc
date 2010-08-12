@@ -5,7 +5,7 @@ describe 'Multiple arities serializable proc' do
   extend SerializableProc::Spec::Helpers
 
   expected_file = File.expand_path(__FILE__)
-  expected_code = "lambda { |arg1, arg2| [\"a\", \"b\"].map { |x| puts(x) } }"
+  expected_code = "lambda { |lvar_arg1, lvar_arg2| [\"a\", \"b\"].map { |lvar_x| puts(lvar_x) } }"
 
   should_handle_proc_variable expected_file, expected_code, {
     # ////////////////////////////////////////////////////////////////////////

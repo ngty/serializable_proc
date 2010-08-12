@@ -19,7 +19,7 @@ class SerializableProc
     file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
     @file, @line = File.expand_path(file), line.to_i
     @code, sexp = Parsers::PT.process(block) || Parsers::RP.process(self.class, @file, @line)
-    @binding = Binding.new(sexp.inspect, block.binding)
+    @binding = Binding.new(block.binding, sexp)
   end
 
   def ==(other)
@@ -61,14 +61,14 @@ class SerializableProc
 
     class Binding #:nodoc#
 
-      def initialize(sexp_str, binding)
-        @hash = {}
+      def initialize(binding, sexp)
+        @vars, sexp_str = {}, sexp.inspect
         while m = sexp_str.match(/^(.*?s\(:(?:l|g|c|i)var, :([^\)]+)\))/)
           ignore, var = m[1..2]
           sexp_str.sub!(ignore,'')
           begin
             val = binding.eval(var) rescue nil
-            @hash.update(var.to_sym => mclone(val))
+            @vars.update(Sandboxer.fvar(var) => mclone(val))
           rescue TypeError
             raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
           end
@@ -76,40 +76,21 @@ class SerializableProc
       end
 
       def eval!
-        @binding ||= begin
-          backup_globals
-          set_vars = @hash.map{|(k,v)| "#{k} = Marshal.load(%|#{mdump(v)}|)" } * '; '
+        @binding ||= (
+          set_vars = @vars.map{|(k,v)| "#{k} = Marshal.load(%|#{mdump(v)}|)" } * '; '
           (binding = Kernel.binding).eval(set_vars) ; binding
-        ensure
-          restore_globals
-        end
+        )
       end
 
       def marshal_dump
-        @hash
+        @vars
       end
 
       def marshal_load(data)
-        @hash = data
+        @vars = data
       end
 
       private
-
-        def backup_globals
-          @hash.each do |var, val|
-            if var.to_s =~ /^\$/
-              (@globals_backup ||= {}).update(var => (eval(var.to_s) rescue nil))
-              eval("#{var} = Marshal.load(%|#{mdump(val)}|)")
-            end
-          end
-        end
-
-        def restore_globals
-          (@globals_backup ||= {}).each do |global, val|
-            eval("#{global} = Marshal.load(%|#{mdump(val)}|)")
-          end
-          @globals_backup = nil
-        end
 
         def mdump(val)
           Marshal.dump(val).gsub('|','\|')
@@ -123,18 +104,21 @@ class SerializableProc
 
     module Parsers #:nodoc:
 
+      RUBY_2_RUBY = Ruby2Ruby.new
+
       module PT #:nodoc:
         class << self
           def process(block)
-            [block.to_ruby, block.to_sexp] if Object.const_defined?(:ParseTree)
+            if Object.const_defined?(:ParseTree)
+              sexp = block.to_sexp
+              [RUBY_2_RUBY.process(Sandboxer.fsexp(sexp)), sexp]
+            end
           end
         end
       end
 
       module RP #:nodoc:
         class << self
-
-          RUBY_2_RUBY = Ruby2Ruby.new
 
           def process(klass, file, line)
             const_set(:RUBY_PARSER, RubyParser.new) unless const_defined?(:RUBY_PARSER)
@@ -145,16 +129,14 @@ class SerializableProc
           private
 
             def extract_code_and_sexp
-              sexp, remaining = extract_sexp_args
+              sexp_str, remaining = extract_sexp_args
               while frag = remaining[/^([^\)]*\))/,1]
                 begin
-                  return [
-                    unescape_magic_vars(
-                      RUBY_2_RUBY.process(eval(sexp += frag)).
-                        sub(/(#{@klass}\.new|Proc\.new|proc)/,'lambda').
-                        sub(/__serializable_(lambda|proc)_marker__\(\d+\)\s*;?\s*\n?/m,'')
-                    ), eval(sexp)
-                  ]
+                  sexp = eval(sexp_str += frag) # this throws syntax error if sexp is invalid
+                  code = unescape_magic_vars(RUBY_2_RUBY.process(Sandboxer.fsexp(sexp))).
+                    sub(/(#{@klass}\.new|Proc\.new|proc)/,'lambda').
+                    sub(/__serializable_(lambda|proc)_marker__\(\d+\)\s*;?\s*\n?/m,'')
+                  return [code, sexp]
                 rescue SyntaxError
                   remaining.sub!(frag,'')
                 end
@@ -212,6 +194,29 @@ class SerializableProc
         end
       end
 
+    end
+
+    module Sandboxer
+      class << self
+
+        def fsexp(sexp)
+          n_sexp, t_sexp = nil, sexp.inspect
+          while m = t_sexp.match(/^(.*?s\(:)((i|l|c|g)(asgn|var|vdecl))(,\ :)((|@|@@|\$)([\w]+))(\)|,)/)
+            orig, prepend, _, type, declare, join, _, _, name, append = m[0..-1]
+            declare.sub!('vdecl','asgn')
+            n_sexp = "#{n_sexp}#{prepend}l#{declare}#{join}#{type}var_#{name}#{append}"
+            t_sexp.sub!(orig,'')
+          end
+          eval(n_sexp ? "#{n_sexp}#{t_sexp}" : sexp.inspect)
+        end
+
+        def fvar(var)
+          @translate_var_maps ||= {'@' => 'ivar_', '@@' => 'cvar_', '$' => 'gvar_', '' => 'lvar_'}
+          m = var.to_s.match(/^(|@|@@|\$)(\w+)$/)
+          var.to_s.sub(m[1], @translate_var_maps[m[1]]).to_sym
+        end
+
+      end
     end
 
 end

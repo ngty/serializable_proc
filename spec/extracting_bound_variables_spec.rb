@@ -13,14 +13,15 @@ describe 'Extracting bound variables' do
 
     should "handle outer-scoped ones" do
       x, y = 'awe', 'some'
-      should_have_expected_binding SerializableProc.new{ x + y }, {:x => x, :y => y}
+      should_have_expected_binding \
+        SerializableProc.new{ x + y }, {:lvar_x => x, :lvar_y => y}
     end
 
     should "handle inner-scoped ones" do
       x, y = 'awe', 'some'
       should_have_expected_binding \
         SerializableProc.new{|x| z = 'wonder' ; %w{a b}.each{|y| puts z, x, y } },
-        {:x => x, :y => y, :z => nil}
+        {:lvar_x => x, :lvar_y => y, :lvar_z => nil}
     end
 
     # NOTE: Errors checking are found under ./initializing_errors_spec.rb
@@ -33,14 +34,15 @@ describe 'Extracting bound variables' do
 
     should 'handle outer-scoped ones' do
       @x, @y = 'awe', 'some'
-      should_have_expected_binding SerializableProc.new{ @x + @y }, {:@x => @x, :@y => @y}
+      should_have_expected_binding \
+        SerializableProc.new{ @x + @y }, {:ivar_x => @x, :ivar_y => @y}
     end
 
     should "handle inner-scoped ones" do
       @x, @y = 'awe', 'some'
       should_have_expected_binding \
         SerializableProc.new{ @z = 'wonder' ; %w{a b}.each{ puts @z, @x, @y } },
-        {:@x => @x, :@y => @y, :@z => nil}
+        {:ivar_x => @x, :ivar_y => @y, :ivar_z => nil}
     end
 
     # NOTE: Errors checking are found under ./initializing_errors_spec.rb
@@ -53,14 +55,15 @@ describe 'Extracting bound variables' do
 
     should 'handle outer-scoped ones' do
       @@x, @@y = 'awe', 'some'
-      should_have_expected_binding SerializableProc.new{ @@x + @@y }, {:@@x => @@x, :@@y => @@y}
+      should_have_expected_binding \
+        SerializableProc.new{ @@x + @@y }, {:cvar_x => @@x, :cvar_y => @@y}
     end
 
     should "handle inner-scoped ones" do
       @@x, @@y = 'awe', 'some'
       should_have_expected_binding \
         SerializableProc.new{ @@z = 'wonder' ; %w{a b}.each{ puts @@z, @@x, @@y } },
-        {:@@x => @@x, :@@y => @@y, :@@z => nil}
+        {:cvar_x => @@x, :cvar_y => @@y, :cvar_z => nil}
     end
 
     # NOTE: Errors checking are found under ./initializing_errors_spec.rb
@@ -73,14 +76,14 @@ describe 'Extracting bound variables' do
 
     should 'handle outer-scoped ones' do
       $x, $y = 'awe', 'some'
-      should_have_expected_binding SerializableProc.new{ $x + $y }, {:$x => $x, :$y => $y}
+      should_have_expected_binding SerializableProc.new{ $x + $y }, {:gvar_x => $x, :gvar_y => $y}
     end
 
     should "handle inner-scoped ones" do
       $x, $y = 'awe', 'some'
       should_have_expected_binding \
         SerializableProc.new{ $z = 'wonder' ; %w{a b}.each{ puts $z, $x, $y } },
-        {:$x => $x, :$y => $y, :$z => nil}
+        {:gvar_x => $x, :gvar_y => $y, :gvar_z => nil}
     end
 
     # NOTE: Errors checking are found under ./initializing_errors_spec.rb
