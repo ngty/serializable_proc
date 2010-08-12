@@ -132,7 +132,7 @@ class SerializableProc
               sexp_str, remaining = extract_sexp_args
               while frag = remaining[/^([^\)]*\))/,1]
                 begin
-                  sexp = eval(sexp_str += frag) # this throws syntax error if sexp is invalid
+                  sexp = eval(sexp_str += frag) # this throws SyntaxError if sexp is invalid
                   code = unescape_magic_vars(RUBY_2_RUBY.process(Sandboxer.fsexp(sexp))).
                     sub(/(#{@klass}\.new|Proc\.new|proc)/,'lambda').
                     sub(/__serializable_(lambda|proc)_marker__\(\d+\)\s*;?\s*\n?/m,'')
