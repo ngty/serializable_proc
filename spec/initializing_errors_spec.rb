@@ -3,35 +3,35 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 describe 'Initializing errors' do
 
   unless $parse_tree_installed
-    describe '>> SerializableProc::CannotInitializeError' do
+    describe '>> SerializableProc::CannotAnalyseCodeError' do
 
       extend SerializableProc::Spec::Helpers
 
       should "raise if line has more than 1 'SerializableProc.new'" do
         lambda {
           SerializableProc.new {} ; SerializableProc.new { |arg| %w{a b}.map{|x| puts x } }
-        }.should.be raising_cannot_initialize_error('SerializableProc.new')
+        }.should.be raising_cannot_analyse_error('SerializableProc.new')
       end
 
       should "raise if line has more than 1 'Proc.new'" do
         lambda {
           p1 = Proc.new {} ; p2 = Proc.new { |arg| %w{a b}.map{|x| puts x } }
           SerializableProc.new(&p2)
-        }.should.be raising_cannot_initialize_error('Proc.new')
+        }.should.be raising_cannot_analyse_error('Proc.new')
       end
 
       should "raise if line has more than 1 'lambda'" do
         lambda {
           p1 = lambda {} ; p2 = lambda { |arg| %w{a b}.map{|x| puts x } }
           SerializableProc.new(&p2)
-        }.should.be raising_cannot_initialize_error('lambda')
+        }.should.be raising_cannot_analyse_error('lambda')
       end
 
       should "raise if line has more than 1 'proc'" do
         lambda {
           p1 = proc {} ; p2 = proc { |arg| %w{a b}.map{|x| puts x } }
           SerializableProc.new(&p2)
-        }.should.be raising_cannot_initialize_error('proc')
+        }.should.be raising_cannot_analyse_error('proc')
       end
 
     end

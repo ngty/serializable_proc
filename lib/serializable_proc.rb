@@ -15,10 +15,6 @@ end
 
 class SerializableProc
 
-  class GemNotInstalledError         < Exception ; end
-  class CannotInitializeError        < Exception ; end
-  class CannotSerializeVariableError < Exception ; end
-
   include Marshalable
   marshal_attrs :file, :line, :code, :binding
 

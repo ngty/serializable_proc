@@ -1,4 +1,7 @@
 class SerializableProc
+
+  class CannotSerializeVariableError < Exception ; end
+
   class Binding
 
     include Marshalable

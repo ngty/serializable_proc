@@ -1,4 +1,7 @@
 class SerializableProc
+
+  class CannotAnalyseCodeError < Exception ; end
+
   module Parsers
     module RP
       class << self
@@ -52,7 +55,7 @@ class SerializableProc
               '__serializable_proc_marker__(__LINE__);'
 
             if raw[@line.pred].split(type).size > 2
-              raise CannotInitializeError.new \
+              raise CannotAnalyseCodeError.new \
                 "Static code analysis can only handle single occurrence of '#{type}' per line !!"
             else
               [
