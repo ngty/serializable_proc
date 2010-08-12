@@ -2,6 +2,13 @@ require 'rubygems'
 require 'forwardable'
 require 'ruby2ruby'
 
+begin
+  require 'parse_tree'
+  require 'parse_tree_extensions'
+rescue LoadError
+  require 'ruby_parser'
+end
+
 class SerializableProc
 
   class GemNotInstalledError         < Exception ; end
@@ -119,13 +126,7 @@ class SerializableProc
       module PT #:nodoc:
         class << self
           def process(block)
-            begin
-              require 'parse_tree'
-              require 'parse_tree_extensions'
-              [block.to_ruby, block.to_sexp]
-            rescue LoadError
-              nil
-            end
+            [block.to_ruby, block.to_sexp] if Object.const_defined?(:ParseTree)
           end
         end
       end
@@ -133,26 +134,15 @@ class SerializableProc
       module RP #:nodoc:
         class << self
 
+          RUBY_2_RUBY = Ruby2Ruby.new
+
           def process(klass, file, line)
-            initialize_parser
+            const_set(:RUBY_PARSER, RubyParser.new) unless const_defined?(:RUBY_PARSER)
             @klass, @file, @line = klass, file, line
             extract_code_and_sexp
           end
 
           private
-
-            def initialize_parser
-              begin
-                self.class.instance_eval do
-                  require 'ruby_parser'
-                  const_set(:RUBY_2_RUBY, Ruby2Ruby.new) unless const_defined?(:RUBY_2_RUBY)
-                  const_set(:RUBY_PARSER, RubyParser.new) unless const_defined?(:RUBY_PARSER)
-                end
-              rescue LoadError
-                raise GemNotInstalledError.new \
-                  "SerializableProc requires ParseTree (faster) or RubyParser & Ruby2Ruby to work its magic !!"
-              end
-            end
 
             def extract_code_and_sexp
               sexp, remaining = extract_sexp_args
