@@ -108,22 +108,29 @@ Rake::RDocTask.new do |rdoc|
 end
 
 # Benchmarking
-task :benchmark do
-  require 'benchmark'
-  results = []
-  5.times do |i|
-    b = Benchmark.measure{ Rake::Task[:spec].execute }
-    results << "  ##{i.succ.to_s.ljust(2,' ')}  #{b.to_s.gsub(/\(\s+/,'  (').strip}"
+require 'benchmark'
+task :benchmark, :task, :times do |t, args|
+  times, task = (args.times || 5).to_i.method(:times), args.task
+  title = " ~ Benchmark Results for Task :#{task} ~ "
+  results = [%w{nth}, %w{user}, %w{system}, %w{total}, %w{real}]
+
+  # Running benchmarking & collecting results
+  times.call do |i|
+    result = Benchmark.measure{ Rake::Task[task].execute }.to_s
+    user, system, total, real =
+      result.match(/^\s*(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+\(\s*(\d+\.\d+)\)$/)[1..-1]
+    ["##{i.succ}", user, system, total, real].each_with_index{|val, j| results[j] << val }
   end
-  puts %Q{
-====================================================
 
- ~ Benchmark Results ~
+  # Formatting benchmarking results
+  formatted_results = results.map do |rs|
+    width = rs.map(&:to_s).map(&:size).max
+    rs.map{|r| '  ' + r.ljust(width, ' ') }
+  end.transpose.map{|row| row.join }
 
-  nth      user     system      total         real
-#{results.join("\n")}
+  # Showdown .. printout
+  line = '=' * ([title.size, formatted_results.map(&:size).max].max + 2)
+  puts [line, title, formatted_results.join("\n"), line].join("\n\n")
 
-====================================================
-  }
 end
 
