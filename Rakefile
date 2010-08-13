@@ -106,3 +106,24 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+# Benchmarking
+task :benchmark do
+  require 'benchmark'
+  results = []
+  5.times do |i|
+    b = Benchmark.measure{ Rake::Task[:spec].execute }
+    results << "  ##{i.succ.to_s.ljust(2,' ')}  #{b.to_s.gsub(/\(\s+/,'  (').strip}"
+  end
+  puts %Q{
+====================================================
+
+ ~ Benchmark Results ~
+
+  nth      user     system      total         real
+#{results.join("\n")}
+
+====================================================
+  }
+end
+
