@@ -108,13 +108,13 @@ Rake::RDocTask.new do |rdoc|
 end
 
 # Benchmarking
-require 'benchmark'
 task :benchmark, :task, :times do |t, args|
   times, task = (args.times || 5).to_i.method(:times), args.task
   title = " ~ Benchmark Results for Task :#{task} ~ "
   results = [%w{nth}, %w{user}, %w{system}, %w{total}, %w{real}]
 
   # Running benchmarking & collecting results
+  require 'benchmark'
   times.call do |i|
     result = Benchmark.measure{ Rake::Task[task].execute }.to_s
     user, system, total, real =
