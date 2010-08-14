@@ -117,4 +117,43 @@ describe 'Multiple arities serializable proc' do
       should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
   end
 
+  should "handle fanciful initializing with lambda { ... } [##{__LINE__}]" do
+    (SerializableProc.new(&(lambda { |arg1, arg2| %w{a b}.map{|x| puts x } }))).
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
+  end
+
+  should "handle fanciful initializing with lambda do ... end [##{__LINE__}]" do
+    (
+      SerializableProc.new(&(lambda do |arg1, arg2|
+        %w{a b}.map{|x| puts x }
+      end))
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
+  end
+
+  should "handle fanciful initializing with proc { ... } [##{__LINE__}]" do
+    (SerializableProc.new(&(proc { |arg1, arg2| %w{a b}.map{|x| puts x } }))).
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
+  end
+
+  should "handle fanciful initializing with proc do ... end [##{__LINE__}]" do
+    (
+      SerializableProc.new(&(proc do |arg1, arg2|
+        %w{a b}.map{|x| puts x }
+      end))
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
+  end
+
+  should "handle fanciful initializing with Proc.new { ... } [##{__LINE__}]" do
+    (SerializableProc.new(&(Proc.new { |arg1, arg2| %w{a b}.map{|x| puts x } }))).
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
+  end
+
+  should "handle fanciful initializing with Proc.new do ... end [##{__LINE__}]" do
+    (
+      SerializableProc.new(&(Proc.new do |arg1, arg2|
+        %w{a b}.map{|x| puts x }
+      end))
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
+  end
+
 end

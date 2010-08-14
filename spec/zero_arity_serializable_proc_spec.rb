@@ -117,4 +117,43 @@ describe 'Zero arity serializable proc' do
       should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
   end
 
+  should "handle fanciful initializing with lambda { ... } [##{__LINE__}]" do
+    (SerializableProc.new(&(lambda { %w{a b}.map{|x| puts x } }))).
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
+  end
+
+  should "handle fanciful initializing with lambda do ... end [##{__LINE__}]" do
+    (
+      SerializableProc.new(&(lambda do
+        %w{a b}.map{|x| puts x }
+      end))
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
+  end
+
+  should "handle fanciful initializing with proc { ... } [##{__LINE__}]" do
+    (SerializableProc.new(&(proc { %w{a b}.map{|x| puts x } }))).
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
+  end
+
+  should "handle fanciful initializing with proc do ... end [##{__LINE__}]" do
+    (
+      SerializableProc.new(&(proc do
+        %w{a b}.map{|x| puts x }
+      end))
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
+  end
+
+  should "handle fanciful initializing with Proc.new { ... } [##{__LINE__}]" do
+    (SerializableProc.new(&(Proc.new { %w{a b}.map{|x| puts x } }))).
+      should.be having_expected_proc_attrs(expected_file, __LINE__.pred, expected_code)
+  end
+
+  should "handle fanciful initializing with Proc.new do ... end [##{__LINE__}]" do
+    (
+      SerializableProc.new(&(Proc.new do
+        %w{a b}.map{|x| puts x }
+      end))
+    ).should.be having_expected_proc_attrs(expected_file, __LINE__ - 3, expected_code)
+  end
+
 end
