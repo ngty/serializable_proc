@@ -67,11 +67,15 @@ class SerializableProc
           end
 
           def escape_magic_vars(s)
-            %w{__FILE__ __LINE__}.inject(s){|s, var| s.gsub(var, "%|((#{var}))|") }
+            %w{__FILE__ __LINE__}.inject(s) do |s, var|
+              s.gsub(var, "__serializable_proc_#{var.downcase}__")
+            end
           end
 
           def unescape_magic_vars(s)
-            %w{__FILE__ __LINE__}.inject(s){|s, var| s.gsub(%|"((#{var}))"|, var) }
+            %w{__FILE__ __LINE__}.inject(s) do |s, var|
+              s.gsub("__serializable_proc_#{var.downcase}__", var)
+            end
           end
 
           def raw_code
