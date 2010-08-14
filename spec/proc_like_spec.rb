@@ -128,6 +128,11 @@ describe 'Being proc like' do
   end
 
   describe '>> to_proc' do
+
+    class << self
+      def work(&block) ; yield ; end
+    end
+
     should 'return a non-serializable proc' do
       o_proc = lambda { %w{b c}.map{|x| x } }
       s_proc = SerializableProc.new(&o_proc)
@@ -136,6 +141,12 @@ describe 'Being proc like' do
       n_proc.class.should == Proc
       n_proc.call.should.equal(o_proc.call)
     end
+
+    should "support passing to a method using '&' char" do
+      s_proc = SerializableProc.new { %w{b c}.map{|x| x } }
+      work(&s_proc).should.equal(%w{b c})
+    end
+
   end
 
   describe '>> to_s' do
