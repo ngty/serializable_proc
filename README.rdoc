@@ -112,6 +112,9 @@ But the following will work as expected:
    on ParseTree-based one
 3. Implementing alternative means of extracting the code block without requiring help
    of ParseTree or RubyParser
+4. Implement workaround to tackle line-numbering bug in JRuby, which causes the
+   RubyParser-based implementation to fail, for more info abt JRuby's line-numbering
+   bug, see http://stackoverflow.com/questions/3454838/jruby-line-numbering-problem
 
 == Note on Patches/Pull Requests
 
