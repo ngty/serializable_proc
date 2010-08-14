@@ -1,15 +1,131 @@
 = serializable_proc
 
-Description goes here.
+As the name suggests, SerializableProc is a proc that can be serialized (marshalled).
+A proc is a closure, which consists of the code block defining it, and binding of
+local variables. SerializableProc's approach to serializability is to extract:
+
+1. the code from the proc (using ParseTree or RubyParser), and
+2. the local, instance, class & global variables reference within the proc from the
+   proc's binding, using deep copy via Marshal.load(Marshal.dump(var))
+
+A SerializableProc differs from the vanilla Proc in the following 2 ways:
+
+=== 1. Isolated variables
+
+Upon declaration, all variables (local, instance, class & global) within its context
+are extracted from the proc's binding, and are isolated from changes outside the proc's
+scope, thus, achieving a snapshot effect.
+
+  require 'rubygems'
+  require 'serializable_proc'
+
+  x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+
+  s_proc = SerializableProc.new { [x, @x, @@x, $x].join(', ') }
+  v_proc = Proc.new { [x, @x, @@x, $x].join(', ') }
+
+  x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
+
+  puts s_proc.call # >> "lx, ix, cx, gx"
+  puts v_proc.call # >> "ly, iy, cy, gy"
+
+=== 2. Marshallable
+
+No throwing of TypeError when marshalling a SerializableProc:
+
+  Marshal.load(Marshal.dump(s_proc)).call # >> "lx, ix, cx, gx"
+  Marshal.load(Marshal.dump(v_proc)).call # >> TypeError (cannot dump Proc)
+
+== Installing It
+
+The religiously standard way:
+
+  $ gem install ParseTree serializable_proc
+
+Or on 1.9.* or JRuby:
+
+  $ gem install ruby_parser serializable_proc
+
+By default, SerializableProc attempts to load ParseTree, which supports better
+performance & offers many dynamic goodness. If ParseTree cannot be found,
+SerializableProc falls back to the RubyParser-based which suffers some gotchas due
+to its static analysis nature (see 'Gotchas' section).
+
+== Performance
+
+SerializableProc relies on ParseTree or RubyParser to do code extraction. While running
+in ParseTree mode, thanks to the goodness of dynamic code analysis, SerializableProc
+performs faster by a magnitude of abt 5.4 times, as illustrated with the following
+benchmark results (obtained from running the specs suite):
+
+  # ParseTree-based implementation on
+  user      system    total     real
+  0.000000  0.000000  1.030000  1.057029
+  0.000000  0.000000  1.030000  1.057731
+
+  # RubyParse-based implementation
+  user      system    total     real
+  0.000000  0.000000  5.690000  5.699549
+  0.010000  0.000000  5.760000  5.785569
+
+(the above is run on my MRI-1.8.7-p299 [x86_64-linux])
+
+== Gotchas
+
+As RubyParser does only static code analysis, quite a bit of regexp matchings are needed
+to get SerializableProc to work in RubyParser mode. However, as our regexp kungfu is not
+perfect (yet), pls take note of the following:
+
+=== 1. Cannot have multiple initializing code block per line
+
+The following initializations throw SerializableProc::CannotAnalyseCodeError:
+
+  # Multiple SerializableProc.new per line
+  SerializableProc.new { x } ; SerializableProc.new { y }
+
+  # Multiple lambda per line (the same applies to proc & Proc.new)
+  x_proc = lambda { x } ; y_proc = lambda { y }
+  SerializableProc.new(&x_proc)
+
+  # Mixed lambda, proc & Proc.new per line
+  x_proc = proc { x } ; y_proc = lambda { y }
+  SerializableProc.new(&x_proc)
+
+=== 2. Limited ways to initialize code blocks
+
+Code block must be initialized with lambda, proc, Proc.new & SerializableProc.new,
+the following will throw SerializableProc::CannotAnalyseCodeError:
+
+  def create_serializable_proc(&block)
+    SerializableProc.new(&block)
+  end
+
+  create_serializable_proc { x }
+
+But the following will work as expected:
+
+  x_proc = lambda { x }
+  create_serializable_proc(&x_proc)
+
+== TODO (just brain-dumping)
+
+1. Provide flexibility for user to specify whether global variables should be isolated,
+   because globals are globals, it may sometimes be useful to use/manipulate the globals
+   within the context that the SerializableProc is called, instead of when it is
+   initialized
+2. The RubyParser-based implementation probably need further optimization
+3. Implementing alternative means of extracting the code block without requiring help
+   of ParseTree or RubyParser
 
 == Note on Patches/Pull Requests
- 
+
 * Fork the project.
 * Make your feature addition or bug fix.
 * Add tests for it. This is important so I don't break it in a
   future version unintentionally.
 * Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
+  (if you want to have your own version, that is fine but bump version in a commit by
+  itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
 == Copyright
