@@ -115,13 +115,17 @@ describe 'Being proc like' do
   end
 
   describe '>> binding' do
-    should 'return binding that contains duplicated contextual reference values' do
-      x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
-      expected = {'x' => x.dup, '@x' => @x.dup, '@@x' => @@x.dup, '$x' => $x.dup}
-      s_proc = SerializableProc.new { [x, @x, @@x, $x] }
-      x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
-      expected.each{|k,v| s_proc.binding.eval(k).should.equal(v) }
+    should 'raise SerializableProc::NotImplementedError' do
+      lambda { SerializableProc.new { x }.binding }.
+        should.raise(SerializableProc::NotImplementedError)
     end
+    # should 'return binding that contains duplicated contextual reference values' do
+    #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+    #   expected = {'x' => x.dup, '@x' => @x.dup, '@@x' => @@x.dup, '$x' => $x.dup}
+    #   s_proc = SerializableProc.new { [x, @x, @@x, $x] }
+    #   x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
+    #   expected.each{|k,v| s_proc.binding.eval(k).should.equal(v) }
+    # end
   end
 
   describe '>> to_proc' do

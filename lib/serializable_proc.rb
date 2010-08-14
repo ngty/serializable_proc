@@ -105,7 +105,7 @@ class SerializableProc
   #   action(&s_proc) # >> 'lx, ix, cx, gx'
   #
   def to_proc
-    @proc ||= eval(@code, binding, @file, @line)
+    @proc ||= eval(@code, @binding.eval!, @file, @line)
   end
 
   ##
@@ -150,7 +150,7 @@ class SerializableProc
   # (WIP) Returns the proc's associated binding, which can be used for Kernel#eval.
   #
   def binding
-    @binding.eval!
+    raise NotImplementedError
   end
 
 end
