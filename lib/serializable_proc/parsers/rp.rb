@@ -55,9 +55,11 @@ class SerializableProc
               marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
                 '__serializable_proc_marker__(__LINE__);'
 
-              if (frags = raw[@line.pred].split(type)).size > 2 and !frags.any?{|f| f =~ /\w+$/ }
-                raise CannotAnalyseCodeError.new \
-                  "Static code analysis can only handle single occurrence of '#{type}' per line !!"
+              splits = raw[@line.pred].split(/(#{declarative})/).reject{|f| f =~ /^(#{declarative})$/ }
+              if splits.size > 2 and !splits.any?{|f| f =~ /\w+$/ }
+                msg = "Static code analysis can only handle single occurrence of '%s' per line !!" %
+                  declarative.split('|').join("'/'")
+                raise CannotAnalyseCodeError.new(msg)
               else
                 return [
                   RUBY_PARSER.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,

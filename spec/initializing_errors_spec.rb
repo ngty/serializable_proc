@@ -10,28 +10,49 @@ describe 'Initializing errors' do
       should "raise if line has more than 1 'SerializableProc.new'" do
         lambda {
           SerializableProc.new {} ; SerializableProc.new { |arg| %w{a b}.map{|x| puts x } }
-        }.should.be raising_cannot_analyse_error('SerializableProc.new')
+        }.should.be raising_cannot_analyse_error("'SerializableProc.new'")
       end
 
       should "raise if line has more than 1 'Proc.new'" do
         lambda {
           p1 = Proc.new {} ; p2 = Proc.new { |arg| %w{a b}.map{|x| puts x } }
           SerializableProc.new(&p2)
-        }.should.be raising_cannot_analyse_error('Proc.new')
+        }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
       end
 
       should "raise if line has more than 1 'lambda'" do
         lambda {
           p1 = lambda {} ; p2 = lambda { |arg| %w{a b}.map{|x| puts x } }
           SerializableProc.new(&p2)
-        }.should.be raising_cannot_analyse_error('lambda')
+        }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
       end
 
       should "raise if line has more than 1 'proc'" do
         lambda {
           p1 = proc {} ; p2 = proc { |arg| %w{a b}.map{|x| puts x } }
           SerializableProc.new(&p2)
-        }.should.be raising_cannot_analyse_error('proc')
+        }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
+      end
+
+      should "raise if line mixes 'lambda' & 'proc'" do
+        lambda {
+          p1 = lambda {} ; p2 = proc { |arg| %w{a b}.map{|x| puts x } }
+          SerializableProc.new(&p2)
+        }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
+      end
+
+      should "raise if line mixes 'Proc.new' & 'proc'" do
+        lambda {
+          p1 = Proc.new {} ; p2 = proc { |arg| %w{a b}.map{|x| puts x } }
+          SerializableProc.new(&p2)
+        }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
+      end
+
+      should "raise if line mixes 'Proc.new' & 'lambda'" do
+        lambda {
+          p1 = Proc.new {} ; p2 = lambda { |arg| %w{a b}.map{|x| puts x } }
+          SerializableProc.new(&p2)
+        }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
       end
 
     end

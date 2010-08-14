@@ -59,10 +59,10 @@ class SerializableProc
         end
       end
 
-      def raising_cannot_analyse_error(name)
+      def raising_cannot_analyse_error(descrp)
         lambda do |block|
           block.should.raise(SerializableProc::CannotAnalyseCodeError).message.should.
-          equal("Static code analysis can only handle single occurrence of '#{name}' per line !!")
+          equal("Static code analysis can only handle single occurrence of #{descrp} per line !!")
           true
         end
       end
