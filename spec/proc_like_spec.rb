@@ -150,10 +150,27 @@ describe 'Being proc like' do
   end
 
   describe '>> to_s' do
+
     extend SerializableProc::Spec::Helpers
-    should 'return its code' do
-      SerializableProc.new{ x }.to_s.should.be having_same_semantics_as('lambda { x }')
+
+    should 'return extracted code when debug is not specified' do
+      x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+      SerializableProc.new{ [x,@x,@@x,$x] }.to_s.should.be \
+        having_same_semantics_as('lambda { [x, @x, @@x, $x] }')
     end
+
+    should 'return extracted code when debug is turned off' do
+      x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+      SerializableProc.new{ [x,@x,@@x,$x] }.to_s(false).should.be \
+        having_same_semantics_as('lambda { [x, @x, @@x, $x] }')
+    end
+
+    should 'return runnable code when debug is turned on' do
+      x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+      SerializableProc.new{ [x,@x,@@x,$x] }.to_s(true).should.be \
+        having_same_semantics_as('lambda { [lvar_x, ivar_x, cvar_x, gvar_x] }')
+    end
+
   end
 
   describe '>> arity' do

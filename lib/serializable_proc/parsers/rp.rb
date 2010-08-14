@@ -19,9 +19,13 @@ class SerializableProc
             while frag = remaining[/^([^\)]*\))/,1]
               begin
                 sexp = eval(sexp_str += frag) # this throws SyntaxError if sexp is invalid
-                code = unescape_magic_vars(RUBY_2_RUBY.process(Sandboxer.fsexp(sexp))).
-                  sub(/#{marker}\s*;?/m,'').sub(type,'lambda')
-                return [code, sexp]
+                runnable_code, extracted_code = [
+                  RUBY_2_RUBY.process(Sandboxer.fsexp(sexp)),
+                  RUBY_2_RUBY.process(eval(sexp.inspect))
+                ].map do |code|
+                  unescape_magic_vars(code).sub(/#{marker}\s*;?/m,'').sub(type,'lambda')
+                end
+                return [{:runnable => runnable_code, :extracted => extracted_code}, sexp]
               rescue SyntaxError
                 remaining.sub!(frag,'')
               end

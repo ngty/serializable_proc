@@ -45,7 +45,7 @@ class SerializableProc
 
       def having_expected_proc_attrs(file, line, code)
         lambda do |s_proc|
-          s_proc.code.should.be having_same_semantics_as(code)
+          s_proc.code[:runnable].should.be having_same_semantics_as(code)
           s_proc.file.should.equal(file)
           s_proc.line.should.equal(line)
         end
@@ -82,7 +82,7 @@ class SerializableProc
         test_args.each do |line, block|
           should "handle proc variable [##{line}]" do
             s_proc = SerializableProc.new(&block)
-            s_proc.code.should.be having_same_semantics_as(code)
+            s_proc.code[:runnable].should.be having_same_semantics_as(code)
             s_proc.file.should.equal(file)
             s_proc.line.should.equal(line.succ)
           end

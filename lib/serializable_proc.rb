@@ -103,7 +103,7 @@ class SerializableProc
   #   action(&s_proc) # >> 'lx, ix, cx, gx'
   #
   def to_proc
-    @proc ||= eval(@code, @binding.eval!, @file, @line)
+    @proc ||= eval(@code[:runnable], @binding.eval!, @file, @line)
   end
 
   ##
@@ -126,8 +126,8 @@ class SerializableProc
   # * class variable -> replaced '@@' with 'cvar_'
   # * global variable -> replaced '$ with 'gvar_'
   #
-  def to_s
-    @code
+  def to_s(debug = false)
+    @code[debug ? :runnable : :extracted]
   end
 
   ##
