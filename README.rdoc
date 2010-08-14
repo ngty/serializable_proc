@@ -26,8 +26,8 @@ scope, thus, achieving a snapshot effect.
 
   x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
 
-  puts s_proc.call # >> "lx, ix, cx, gx"
-  puts v_proc.call # >> "ly, iy, cy, gy"
+  s_proc.call # >> "lx, ix, cx, gx"
+  v_proc.call # >> "ly, iy, cy, gy"
 
 === 2. Marshallable
 
