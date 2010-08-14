@@ -18,7 +18,7 @@ end
 #
 # #1. Isolated variables
 #
-# Upon declaration, all variables (local, instance, class & global) within its context
+# Upon initializing, all variables (local, instance, class & global) within its context
 # are extracted from the proc's binding, and are isolated from changes outside the
 # proc's scope, thus, achieving a snapshot effect.
 #
