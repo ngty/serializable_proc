@@ -162,10 +162,7 @@ class SerializableProc
 
   alias_method :[], :call
 
-  ##
-  # (WIP) Returns the proc's associated binding, which can be used for Kernel#eval.
-  #
-  def binding
+  def binding #:nodoc:
     raise NotImplementedError
   end
 
