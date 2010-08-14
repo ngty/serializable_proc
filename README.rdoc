@@ -12,7 +12,7 @@ A SerializableProc differs from the vanilla Proc in the following 2 ways:
 
 === 1. Isolated variables
 
-Upon declaration, all variables (local, instance, class & global) within its context
+Upon initializing, all variables (local, instance, class & global) within its context
 are extracted from the proc's binding, and are isolated from changes outside the proc's
 scope, thus, achieving a snapshot effect.
 
@@ -55,20 +55,15 @@ to its static analysis nature (see 'Gotchas' section).
 
 SerializableProc relies on ParseTree or RubyParser to do code extraction. While running
 in ParseTree mode, thanks to the goodness of dynamic code analysis, SerializableProc
-performs faster by a magnitude of abt 5.4 times, as illustrated with the following
-benchmark results (obtained from running the specs suite):
+performs faster by a magnitude of abt 7.5 times for the same ruby, as illustrated with
+the following benchmark results (obtained from running the specs suite):
 
-  # ParseTree-based implementation on
-  user      system    total     real
-  0.000000  0.000000  1.030000  1.057029
-  0.000000  0.000000  1.030000  1.057731
+  MRI & implementation    user      system    total     real
+  1.8.7p299 (ParseTree)   0.000000  0.000000  1.310000  1.312676
+  1.8.7p299 (RubyParser)  0.000000  0.010000  9.560000  9.706455
+  1.9.1p376 (RubyParser)  0.010000  0.010000  8.240000  8.288799
 
-  # RubyParse-based implementation
-  user      system    total     real
-  0.000000  0.000000  5.690000  5.699549
-  0.010000  0.000000  5.760000  5.785569
-
-(the above is run on my MRI-1.8.7-p299 [x86_64-linux])
+(the above is run on my x86_64-linux):
 
 == Gotchas
 
@@ -113,7 +108,8 @@ But the following will work as expected:
    because globals are globals, it may sometimes be useful to use/manipulate the globals
    within the context that the SerializableProc is called, instead of when it is
    initialized
-2. The RubyParser-based implementation probably need further optimization
+2. The RubyParser-based implementation probably need alot more optimization to catch up
+   on ParseTree-based one
 3. Implementing alternative means of extracting the code block without requiring help
    of ParseTree or RubyParser
 
