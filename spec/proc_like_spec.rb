@@ -115,9 +115,8 @@ describe 'Being proc like' do
   end
 
   describe '>> binding' do
-    should 'raise SerializableProc::NotImplementedError' do
-      lambda { SerializableProc.new { x }.binding }.
-        should.raise(SerializableProc::NotImplementedError)
+    should 'raise NotImplementedError' do
+      lambda { SerializableProc.new { x }.binding }.should.raise(NotImplementedError)
     end
     # should 'return binding that contains duplicated contextual reference values' do
     #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
@@ -143,6 +142,21 @@ describe 'Being proc like' do
     extend SerializableProc::Spec::Helpers
     should 'return its code' do
       SerializableProc.new{ x }.to_s.should.be having_same_semantics_as('lambda { x }')
+    end
+  end
+
+  describe '>> arity' do
+    {
+      __LINE__ => lambda { },
+      __LINE__ => lambda {|x| },
+      __LINE__ => lambda {|x,y| },
+      __LINE__ => lambda {|*x| },
+      __LINE__ => lambda {|x, *y| },
+      __LINE__ => lambda {|(x,y)| },
+    }.each do |debug, block|
+      should "return arity of initializing block [##{debug}]" do
+        SerializableProc.new(&block).arity.should.equal(block.arity)
+      end
     end
   end
 

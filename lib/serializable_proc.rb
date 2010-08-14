@@ -44,10 +44,8 @@ end
 #
 class SerializableProc
 
-  class << NotImplementedError < Exception ; end
-
   include Marshalable
-  marshal_attrs :file, :line, :code, :binding
+  marshal_attrs :file, :line, :code, :arity, :binding
 
   ##
   # Creates a new instance of SerializableProc by passing in a code block, in the process,
@@ -67,7 +65,7 @@ class SerializableProc
   #
   def initialize(&block)
     file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
-    @file, @line = File.expand_path(file), line.to_i
+    @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
     @code, sexp = Parsers::PT.process(block) || Parsers::RP.process(self.class, @file, @line)
     @binding = Binding.new(block.binding, sexp)
   end
@@ -130,6 +128,24 @@ class SerializableProc
   #
   def to_s
     @code
+  end
+
+  ##
+  # Returns the number of arguments accepted when running #call. This is extracted directly
+  # from the initializing code block, & is only as accurate as Proc#arity.
+  #
+  # Note that at the time of this writing, running on 1.8.* yields different result from
+  # that of 1.9.*:
+  #
+  #   lambda { }.arity         # 1.8.* (-1) / 1.9.* (0)  (?!)
+  #   lambda {|x| }.arity      # 1.8.* (1)  / 1.9.* (1)
+  #   lambda {|x,y| }.arity    # 1.8.* (2)  / 1.9.* (2)
+  #   lambda {|*x| }.arity     # 1.8.* (-1) / 1.9.* (-1)
+  #   lambda {|x, *y| }.arity  # 1.8.* (-2) / 1.9.* (-2)
+  #   lambda {|(x,y)| }.arity  # 1.8.* (1)  / 1.9.* (1)
+  #
+  def arity
+    @arity
   end
 
   ##
