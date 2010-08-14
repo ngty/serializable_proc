@@ -15,12 +15,12 @@ class SerializableProc
         private
 
           def extract_code_and_sexp
-            sexp_str, remaining, type = extract_sexp_args
+            sexp_str, remaining, type, marker = extract_sexp_args
             while frag = remaining[/^([^\)]*\))/,1]
               begin
                 sexp = eval(sexp_str += frag) # this throws SyntaxError if sexp is invalid
                 code = unescape_magic_vars(RUBY_2_RUBY.process(Sandboxer.fsexp(sexp))).
-                  sub(/__serializable_proc_marker__\(\d+\)\s*;?\s*\n?/m,'').sub(type,'lambda')
+                  sub(/#{marker}\s*;?/m,'').sub(type,'lambda')
                 return [code, sexp]
               rescue SyntaxError
                 remaining.sub!(frag,'')
@@ -39,29 +39,27 @@ class SerializableProc
                 end
               ),
               '.*?',
-              rq["s(:call, nil, :__serializable_proc_marker__, s(:arglist, s(:lit, #{@line})))"],
+              rq["s(:call, nil, :#{marker}, s(:arglist))"],
               '))(.*)$'
             ].join, Regexp::MULTILINE)
-            [raw.match(regexp)[2..3], type].flatten
+            [raw.match(regexp)[2..3], type, marker].flatten
           end
+
 
           def raw_sexp_and_marker
             %W{#{@klass}\.new lambda|proc|Proc\.new}.each do |declarative|
               regexp = /^(.*?(#{declarative})\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/
               raw = raw_code
               lines1, lines2 = [(0 .. (@line - 2)), (@line.pred .. -1)].map{|r| raw[r] }
-              next unless m = lines2[0].match(regexp)
-              match, type = m[1..2]
-              marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
-                '__serializable_proc_marker__(__LINE__);'
+              match, type = lines2[0].match(regexp)[1..2] rescue next
 
               if lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*?\W(#{declarative}))+(\W.*)?$/
                 msg = "Static code analysis can only handle single occurrence of '%s' per line !!" %
                   declarative.split('|').join("'/'")
                 raise CannotAnalyseCodeError.new(msg)
               elsif lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*)?$/
-                lines = lines1.join + escape_magic_vars(lines2[0]).sub(match, marker) +
-                  escape_magic_vars(lines2[1..-1].join)
+                marker = "__serializable_proc_marker_#{@line}__"
+                lines = lines1.join + escape_magic_vars(lines2[0].sub(match, match+marker+';') + lines2[1..-1].join)
                 return [RUBY_PARSER.parse(lines).inspect, type, marker]
               end
             end
