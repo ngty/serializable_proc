@@ -55,6 +55,14 @@ describe 'Initializing errors' do
         }.should.be raising_cannot_analyse_error("'lambda'/'proc'/'Proc.new'")
       end
 
+      should "raise if line does not have lambda, proc, Proc.new or SerializableProc.new" do
+        lambda {
+          def create_serializable_proc(&block) ; SerializableProc.new(&block) ; end
+          create_serializable_proc { %w{a b}.map{|x| puts x } }
+        }.should.raise(SerializableProc::CannotAnalyseCodeError).
+          message.should.equal('Cannot find specified initializer !!')
+      end
+
     end
   end
 

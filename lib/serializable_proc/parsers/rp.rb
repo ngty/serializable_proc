@@ -47,24 +47,22 @@ class SerializableProc
 
           def raw_sexp_and_marker
             %W{#{@klass}\.new lambda|proc|Proc\.new}.each do |declarative|
-              regexp = /^(.*?(#{declarative})?\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/m
+              regexp = /^(.*?(#{declarative})\s*(do|\{)\s*(\|([^\|]*)\|\s*)?)/
               raw = raw_code
-              frag1, frag2 = [(0 .. (@line - 2)), (@line.pred .. -1)].map{|r| raw[r].join }
-              match, type = frag2.match(regexp)[1..2]
-              next unless type
+              lines1, lines2 = [(0 .. (@line - 2)), (@line.pred .. -1)].map{|r| raw[r] }
+              next unless m = lines2[0].match(regexp)
+              match, type = m[1..2]
               marker = (match =~ /\n\s*$/ ? "#{match.sub(/\n\s*$/,'')} %s \n" : "#{match} %s " ) %
                 '__serializable_proc_marker__(__LINE__);'
 
-              splits = raw[@line.pred].split(/(#{declarative})/).reject{|f| f =~ /^(#{declarative})$/ }
-              if splits.size > 2 and !splits.any?{|f| f =~ /\w+$/ }
+              if lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*?\W(#{declarative}))+(\W.*)?$/
                 msg = "Static code analysis can only handle single occurrence of '%s' per line !!" %
                   declarative.split('|').join("'/'")
                 raise CannotAnalyseCodeError.new(msg)
-              else
-                return [
-                  RUBY_PARSER.parse(frag1 + escape_magic_vars(frag2).sub(match, marker)).inspect,
-                  type, marker
-                ]
+              elsif lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*)?$/
+                lines = lines1.join + escape_magic_vars(lines2[0]).sub(match, marker) +
+                  escape_magic_vars(lines2[1..-1].join)
+                return [RUBY_PARSER.parse(lines).inspect, type, marker]
               end
             end
             raise CannotAnalyseCodeError.new('Cannot find specified initializer !!')
