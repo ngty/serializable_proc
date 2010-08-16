@@ -96,4 +96,35 @@ describe 'Extracting bound variables' do
     end
   end
 
+  describe '>> extracting block-scoped variables' do
+
+    should "not handle local variables" do
+      x = 'ox'
+      SerializableProc.new {
+        def test ; x = 'lx' ; end
+      }.binding_dump.should.be.empty
+    end
+
+    should "not handle instance variables" do
+      @x = 'ox'
+      SerializableProc.new {
+        def test ; @x = 'ix' ; end
+      }.binding_dump.should.be.empty
+    end
+
+    should "not handle class variables" do
+      @@x = 'ox'
+      SerializableProc.new {
+        def test ; @@x = 'cx' ; end
+      }.binding_dump.should.be.empty
+    end
+
+    should "not handle global variables" do
+      $x = 'ox'
+      SerializableProc.new {
+        def test ; $x = 'gx' ; end
+      }.binding_dump.should.be.empty
+    end
+
+  end
 end
