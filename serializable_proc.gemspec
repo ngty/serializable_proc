@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{serializable_proc}
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["NgTzeYang"]
-  s.date = %q{2010-08-14}
+  s.date = %q{2010-08-16}
   s.description = %q{
       Give & take, serializing a ruby proc is possible, though not a perfect one.
       Requires either ParseTree (faster) or RubyParser (& Ruby2Ruby).
@@ -29,11 +29,13 @@ Gem::Specification.new do |s|
      "VERSION",
      "lib/serializable_proc.rb",
      "lib/serializable_proc/binding.rb",
+     "lib/serializable_proc/fixes.rb",
      "lib/serializable_proc/marshalable.rb",
      "lib/serializable_proc/parsers.rb",
      "lib/serializable_proc/parsers/pt.rb",
      "lib/serializable_proc/parsers/rp.rb",
      "lib/serializable_proc/sandboxer.rb",
+     "serializable_proc.gemspec",
      "spec/extracting_bound_variables_spec.rb",
      "spec/initializing_errors_spec.rb",
      "spec/marshalling_spec.rb",
