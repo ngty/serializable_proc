@@ -102,6 +102,12 @@ But the following will work as expected:
   x_proc = lambda { x }
   create_serializable_proc(&x_proc)
 
+== Supported Rubies
+
+SerializableProc has been tested to work on the following rubies:
+
+1. MRI 1.8.6, 1.8.7 & 1.9.1
+
 == TODO (just brain-dumping)
 
 1. Provide flexibility for user to specify whether global variables should be isolated,
@@ -114,7 +120,8 @@ But the following will work as expected:
    of ParseTree or RubyParser
 4. Implement workaround to tackle line-numbering bug in JRuby, which causes the
    RubyParser-based implementation to fail, for more info abt JRuby's line-numbering
-   bug, see http://stackoverflow.com/questions/3454838/jruby-line-numbering-problem
+   bug, see http://stackoverflow.com/questions/3454838/jruby-line-numbering-problem &
+   http://jira.codehaus.org/browse/JRUBY-5014
 
 == Note on Patches/Pull Requests
 
