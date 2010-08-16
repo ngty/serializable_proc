@@ -5,6 +5,7 @@ require 'serializable_proc/marshalable'
 require 'serializable_proc/parsers'
 require 'serializable_proc/binding'
 require 'serializable_proc/sandboxer'
+require 'serializable_proc/fixes'
 
 begin
   require 'parse_tree'
