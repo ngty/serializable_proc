@@ -37,14 +37,14 @@ class SerializableProc
 
       def extract_isolated_types
         o_sexp_arry = @sexp.to_a
-        @sexp = @sexp.gsub(s(:cvdecl, :@@_isolate_vars, SexpAny.new), nil)
+        @sexp = @sexp.gsub(s(:cvdecl, :@@_not_isolated_vars, SexpAny.new), nil)
         types = %w{global instance local class}
 
         if (diff = o_sexp_arry - @sexp.to_a).empty?
           types.map{|t| t[0].chr }
         else
           sexp_str = Sexp.from_array(diff).inspect
-          types.map{|t| t[0].chr if sexp_str.include?("s(:lit, :#{t})") }.compact
+          types.map{|t| t[0].chr unless sexp_str.include?("s(:lit, :#{t})") }.compact
         end
       end
 

@@ -4,26 +4,26 @@ describe 'Extracting local vars within block scope' do
 
   extend SerializableProc::Spec::Helpers
 
-  should "not handle w @@_isolate_vars unspecified" do
+  should "not handle w @@_mingle_vars unspecified" do
     x = 'ox'
     should_have_empty_binding \
       SerializableProc.new { def test ; x = 'lx' ; end }
   end
 
-  should "not handle w @@_isolate_vars including :local" do
+  should "not handle if @@_mingle_vars includes :local" do
     x = 'ox'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_isolate_vars = :local
+        @@_mingle_vars = :local
         def test ; x = 'lx' ; end
       }
   end
 
-  should "not handle w @@_isolate_vars not including :local" do
+  should "not handle if @@_mingle_vars excludes :local" do
     x = 'ox'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_isolate_vars = nil
+        @@_mingle_vars = nil
         def test ; x = 'lx' ; end
       }
   end

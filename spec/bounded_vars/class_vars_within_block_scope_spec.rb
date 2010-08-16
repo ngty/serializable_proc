@@ -4,26 +4,26 @@ describe 'Extracting class vars within block scope' do
 
   extend SerializableProc::Spec::Helpers
 
-  should "not handle w @@_isolate_vars unspecified" do
+  should "not handle w @@_not_isolated_vars unspecified" do
     @@x = 'ox'
     should_have_empty_binding \
       SerializableProc.new { def test ; @@x = 'cx' ; end }
   end
 
-  should "not handle w @@_isolate_vars including :class" do
+  should "not handle if @@_not_isolated_vars includes :class" do
     @@x = 'ox'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_isolate_vars = :class
+        @@_not_isolated_vars = :class
         def test ; @@x = 'cx' ; end
       }
   end
 
-  should "not handle w @@_isolate_vars not including :class" do
+  should "not handle if @@_not_isolated_vars excludes :class" do
     @@x = 'ox'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_isolate_vars = nil
+        @@_not_isolated_vars = nil
         def test ; @@x = 'cx' ; end
       }
   end

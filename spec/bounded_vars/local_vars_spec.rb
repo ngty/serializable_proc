@@ -4,51 +4,51 @@ describe 'Extracting local vars' do
 
   extend SerializableProc::Spec::Helpers
 
-  should 'handle outer-scoped ones w @@_isolate_vars including :local' do
+  should 'handle outer-scoped ones if @@_not_isolated_vars excludes :local' do
     x, y = 'awe', 'some'
     should_have_expected_binding \
       SerializableProc.new {
-        @@_isolate_vars = :local
+        @@_not_isolated_vars = nil
         x + y
       }, {:lvar_x => x, :lvar_y => y}
   end
 
-  should "handle inner-scoped ones w @@_isolate_vars including :local" do
+  should "handle inner-scoped ones if @@_not_isolated_vars excludes :local" do
     x, y = 'awe', 'some'
     should_have_expected_binding \
       SerializableProc.new {
-        @@_isolate_vars = :local
+        @@_not_isolated_vars = nil
         z = 'wonder'
         %w{a b}.each{ puts z, x, y }
       }, {:lvar_x => x, :lvar_y => y, :lvar_z => nil}
   end
 
-  should 'not handle outer-scoped ones w @@_isolate_vars not including :local' do
+  should 'not handle outer-scoped ones if @@_not_isolated_vars includes :local' do
     x, y = 'awe', 'some'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_isolate_vars = nil;
+        @@_not_isolated_vars = :local;
         x + y
       }
   end
 
-  should "not handle inner-scoped ones w @@_isolate_vars not including :local" do
+  should "not handle inner-scoped ones if @@_not_isolated_vars includes :local" do
     x, y = 'awe', 'some'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_isolate_vars = nil;
+        @@_not_isolated_vars = :local;
         z = 'wonder'
         %w{a b}.each{ puts z, x, y }
       }
   end
 
-  should 'handle outer-scoped ones w @@_isolate_vars unspecified' do
+  should 'handle outer-scoped ones w @@_not_isolated_vars unspecified' do
     x, y = 'awe', 'some'
     should_have_expected_binding \
       SerializableProc.new { x + y }, {:lvar_x => x, :lvar_y => y}
   end
 
-  should "handle inner-scoped ones w @@_isolate_vars unspecified" do
+  should "handle inner-scoped ones w @@_not_isolated_vars unspecified" do
     x, y = 'awe', 'some'
     should_have_expected_binding \
       SerializableProc.new {
