@@ -78,6 +78,10 @@ class SerializableProc
         end
       end
 
+      def should_have_empty_binding(s_proc)
+        s_proc.binding_dump.should.be.empty
+      end
+
       def should_handle_proc_variable(file, code, test_args)
         test_args.each do |line, block|
           should "handle proc variable [##{line}]" do

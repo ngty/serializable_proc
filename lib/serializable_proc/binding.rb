@@ -8,10 +8,14 @@ class SerializableProc
     marshal_attr :vars
 
     def initialize(binding, sexp)
-      @vars, sexp_str = {}, sexp.gsub(s(:scope, s(:block, SexpAny.new)), nil).inspect
-      while m = sexp_str.match(/^(.*?s\(:(?:l|g|c|i)var, :([^\)]+)\))/)
+      @vars, flag = {}, '@@_isolate_globals'
+      sexp_str = sexp.gsub(s(:scope, s(:block, SexpAny.new)), nil).inspect
+      types = sexp_str.include?("s(:cvdecl, :#{flag}, s(:true))") ? %w{l g c i} : %w{l c i}
+
+      while m = sexp_str.match(/^(.*?s\(:(?:#{types.join('|')})var, :([^\)]+)\))/)
         ignore, var = m[1..2]
         sexp_str.sub!(ignore,'')
+        next if var == flag
         begin
           val = eval(var, binding) rescue nil
           @vars.update(Sandboxer.fvar(var) => mclone(val))
