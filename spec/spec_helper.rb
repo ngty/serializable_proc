@@ -39,6 +39,12 @@ class SerializableProc
         lambda {|code1| normalize[code1].should.equal(normalize[code2]) }
       end
 
+      def having_runnable_code_as(code)
+        lambda do |s_proc|
+          s_proc.code[:runnable].should.be having_same_semantics_as(code)
+        end
+      end
+
       def same_object_as(o2)
         lambda {|o1| o1.object_id == o2.object_id }
       end
