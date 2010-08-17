@@ -1,3 +1,10 @@
+=== Current
+
+* added support @@_not_isolated_vars, which allows fine-tuning of whether global, class,
+  instance or local variables should be isolated [#ngty]
+* fixed bug of block-scoped (eg. within 'def' block) variables being isolated [#ngty]
+* house-keeping, lots of reorganizing for specs [#ngty]
+
 === 0.1.1 (Aug 16, 2010)
 
 * acheived compatibility with MRI-1.8.6 [#ngty]
