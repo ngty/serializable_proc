@@ -123,6 +123,38 @@ describe 'Renaming variables' do
       ')
     end
 
+    should 'not handle block-scoped ones (single)' do
+      (
+        x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+        SerializableProc.new do
+          @@_not_isolated_vars = :global, :class
+          def test(x) ; [x, @x, @@x, $x] ; end
+        end
+      ).should.be having_runnable_code_as('
+        lambda{
+          @@_not_isolated_vars = :global, :class
+          def test(x) ; [x, @x, @@x, $x] ; end
+        }
+      ')
+    end
+
+    should 'not handle block-scoped ones (multiple)' do
+      (
+        x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+        SerializableProc.new do
+          @@_not_isolated_vars = :global, :class
+          def test1(x) ; [x, @x, @@x, $x] ; end
+          def test2(x) ; [x, @x, @@x, $x] ; end
+        end
+      ).should.be having_runnable_code_as('
+        lambda{
+          @@_not_isolated_vars = :global, :class
+          def test1(x) ; [x, @x, @@x, $x] ; end
+          def test2(x) ; [x, @x, @@x, $x] ; end
+        }
+      ')
+    end
+
   end
 
 end
