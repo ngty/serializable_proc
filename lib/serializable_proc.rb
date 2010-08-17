@@ -2,9 +2,9 @@ require 'rubygems'
 require 'forwardable'
 require 'ruby2ruby'
 require 'serializable_proc/marshalable'
+require 'serializable_proc/isolatable'
 require 'serializable_proc/parsers'
 require 'serializable_proc/binding'
-require 'serializable_proc/sandboxer'
 require 'serializable_proc/fixes'
 
 begin
