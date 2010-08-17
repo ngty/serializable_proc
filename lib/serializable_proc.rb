@@ -103,8 +103,12 @@ class SerializableProc
   #   def action(&block) ; yield ; end
   #   action(&s_proc) # >> 'lx, ix, cx, gx'
   #
-  def to_proc
-    @proc ||= eval(@code[:runnable], @binding.eval!, @file, @line)
+  def to_proc(binding = nil)
+    if binding
+      eval(@code[:runnable], @binding.eval!(binding), @file, @line)
+    else
+      @proc ||= eval(@code[:runnable], @binding.eval!, @file, @line)
+    end
   end
 
   ##
@@ -158,7 +162,11 @@ class SerializableProc
   #   # >> 'hello hello'
   #
   def call(*params)
-    to_proc.call(*params)
+    if (binding = params[-1]).is_a?(::Binding)
+      to_proc(binding).call(*params[0..-2])
+    else
+      to_proc.call(*params)
+    end
   end
 
   alias_method :[], :call
