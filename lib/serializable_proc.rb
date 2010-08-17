@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'forwardable'
 require 'ruby2ruby'
+require 'ruby_parser'
 require 'serializable_proc/marshalable'
 require 'serializable_proc/parsers'
 require 'serializable_proc/binding'
@@ -11,7 +12,6 @@ begin
   require 'parse_tree'
   require 'parse_tree_extensions'
 rescue LoadError
-  require 'ruby_parser'
 end
 
 ##
@@ -64,7 +64,7 @@ end
 class SerializableProc
 
   include Marshalable
-  marshal_attrs :file, :line, :code, :arity, :binding
+  marshal_attrs :file, :line, :code, :arity, :binding, :sexp
 
   ##
   # Creates a new instance of SerializableProc by passing in a code block, in the process,
@@ -95,8 +95,8 @@ class SerializableProc
   def initialize(&block)
     file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
     @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
-    @code, sexp = Parsers::PT.process(block) || Parsers::RP.process(self.class, @file, @line)
-    @binding = Binding.new(block.binding, sexp)
+    @code, @sexp = Parsers::PT.process(block) || Parsers::RP.process(self.class, @file, @line)
+    @binding = Binding.new(block.binding, @sexp[:extracted])
   end
 
   ##
@@ -161,6 +161,16 @@ class SerializableProc
   #
   def to_s(debug = false)
     @code[debug ? :runnable : :extracted]
+  end
+
+  ##
+  # Returns the sexp representation of this instance. By default, the sexp represents the
+  # extracted code, if +debug+ specified as true, the runnable code version is returned.
+  #
+  #   SerializableProc.new { [x, @x, @@x, $x].join(', ') }.to_sexp
+  #
+  def to_sexp(debug = false)
+    @sexp[debug ? :runnable : :extracted]
   end
 
   ##

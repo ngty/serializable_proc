@@ -5,9 +5,13 @@ class SerializableProc
         def process(block)
           if Object.const_defined?(:ParseTree)
             sexp = block.to_sexp
-            runnable_code = RUBY_2_RUBY.process(Sandboxer.fsexp(sexp))
-            extracted_code = RUBY_2_RUBY.process(eval(sexp.inspect))
-            [{:runnable => runnable_code, :extracted => extracted_code}, sexp]
+            fsexp = Sandboxer.fsexp(sexp)
+            runnable_code = RUBY_2_RUBY.process(Sexp.from_array(fsexp.to_a))
+            extracted_code = RUBY_2_RUBY.process(Sexp.from_array(sexp.to_a))
+            [
+              {:runnable => runnable_code, :extracted => extracted_code},
+              {:runnable => fsexp, :extracted => sexp}
+            ]
           end
         end
       end
