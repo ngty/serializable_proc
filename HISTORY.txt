@@ -1,5 +1,7 @@
 === Current
 
+* added SerializableProc#to_sexp to facilitate retrieving of sexp representation of the
+  code block [#ngty]
 * added support @@_not_isolated_vars, which allows fine-tuning of whether global, class,
   instance or local variables should be isolated [#ngty]
 * fixed bug of block-scoped (eg. within 'def' block) variables being isolated [#ngty]
