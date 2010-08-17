@@ -8,9 +8,10 @@ class SerializableProc
     marshal_attr :vars
 
     def initialize(binding, sexp)
-      @sexp, @vars = sexp.gsub(s(:scope, s(:block, SexpAny.new)), nil), {}
-      unless (types = extract_isolated_types).empty?
-        sexp_str = @sexp.inspect
+      sexp, @vars = sexp.gsub(s(:scope, s(:block, SexpAny.new)), nil), {}
+      types, sexp = Sandboxer.isolatable_types(sexp)
+      unless types.empty?
+        sexp_str = sexp.inspect
         while m = sexp_str.match(/^(.*?s\(:(?:#{types.join('|')})var, :([^\)]+)\))/)
           ignore, var = m[1..2]
           sexp_str.sub!(ignore,'')
@@ -34,19 +35,6 @@ class SerializableProc
     end
 
     private
-
-      def extract_isolated_types
-        o_sexp_arry = @sexp.to_a
-        @sexp = @sexp.gsub(s(:cvdecl, :@@_not_isolated_vars, SexpAny.new), nil)
-        types = %w{global instance local class}
-
-        if (diff = o_sexp_arry - @sexp.to_a).empty?
-          types.map{|t| t[0].chr }
-        else
-          sexp_str = Sexp.from_array(diff).inspect
-          types.map{|t| t[0].chr unless sexp_str.include?("s(:lit, :#{t})") }.compact
-        end
-      end
 
       module Extensions
         def self.extended(base)
