@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'forwardable'
 require 'ruby2ruby'
-require 'ruby_parser'
 require 'serializable_proc/marshalable'
 require 'serializable_proc/parsers'
 require 'serializable_proc/binding'
@@ -12,6 +11,7 @@ begin
   require 'parse_tree'
   require 'parse_tree_extensions'
 rescue LoadError
+  require 'ruby_parser'
 end
 
 ##
