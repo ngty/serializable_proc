@@ -1,4 +1,4 @@
-=== Current
+=== 0.2.0 (Aug 18, 2010)
 
 * added SerializableProc#to_sexp to facilitate retrieving of sexp representation of the
   code block [#ngty]

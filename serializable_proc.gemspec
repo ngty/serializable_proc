@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{serializable_proc}
-  s.version = "0.1.1"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["NgTzeYang"]
-  s.date = %q{2010-08-16}
+  s.date = %q{2010-08-18}
   s.description = %q{
       Give & take, serializing a ruby proc is possible, though not a perfect one.
       Requires either ParseTree (faster) or RubyParser (& Ruby2Ruby).
@@ -30,21 +30,36 @@ Gem::Specification.new do |s|
      "lib/serializable_proc.rb",
      "lib/serializable_proc/binding.rb",
      "lib/serializable_proc/fixes.rb",
+     "lib/serializable_proc/isolatable.rb",
      "lib/serializable_proc/marshalable.rb",
      "lib/serializable_proc/parsers.rb",
      "lib/serializable_proc/parsers/pt.rb",
      "lib/serializable_proc/parsers/rp.rb",
-     "lib/serializable_proc/sandboxer.rb",
      "serializable_proc.gemspec",
-     "spec/extracting_bound_variables_spec.rb",
-     "spec/initializing_errors_spec.rb",
-     "spec/marshalling_spec.rb",
-     "spec/multiple_arities_serializable_proc_spec.rb",
-     "spec/one_arity_serializable_proc_spec.rb",
-     "spec/optional_arity_serializable_proc_spec.rb",
-     "spec/proc_like_spec.rb",
-     "spec/spec_helper.rb",
-     "spec/zero_arity_serializable_proc_spec.rb"
+     "spec/bounded_vars/class_vars_spec.rb",
+     "spec/bounded_vars/class_vars_within_block_scope_spec.rb",
+     "spec/bounded_vars/errors_spec.rb",
+     "spec/bounded_vars/global_vars_spec.rb",
+     "spec/bounded_vars/global_vars_within_block_scope_spec.rb",
+     "spec/bounded_vars/instance_vars_spec.rb",
+     "spec/bounded_vars/instance_vars_within_block_scope_spec.rb",
+     "spec/bounded_vars/local_vars_spec.rb",
+     "spec/bounded_vars/local_vars_within_block_scope_spec.rb",
+     "spec/code_block/errors_spec.rb",
+     "spec/code_block/multiple_arities_spec.rb",
+     "spec/code_block/optional_arity_spec.rb",
+     "spec/code_block/renaming_vars_spec.rb",
+     "spec/code_block/single_arity_spec.rb",
+     "spec/code_block/zero_arity_spec.rb",
+     "spec/proc_like/extras_spec.rb",
+     "spec/proc_like/invoking_with_args_spec.rb",
+     "spec/proc_like/invoking_with_class_vars_spec.rb",
+     "spec/proc_like/invoking_with_global_vars_spec.rb",
+     "spec/proc_like/invoking_with_instance_vars_spec.rb",
+     "spec/proc_like/invoking_with_local_vars_spec.rb",
+     "spec/proc_like/marshalling_spec.rb",
+     "spec/proc_like/others_spec.rb",
+     "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/ngty/serializable_proc}
   s.post_install_message = %q{
@@ -67,15 +82,30 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Proc that can be serialized (as the name suggests)}
   s.test_files = [
-    "spec/initializing_errors_spec.rb",
-     "spec/extracting_bound_variables_spec.rb",
-     "spec/one_arity_serializable_proc_spec.rb",
-     "spec/zero_arity_serializable_proc_spec.rb",
-     "spec/multiple_arities_serializable_proc_spec.rb",
-     "spec/marshalling_spec.rb",
-     "spec/optional_arity_serializable_proc_spec.rb",
-     "spec/spec_helper.rb",
-     "spec/proc_like_spec.rb"
+    "spec/proc_like/extras_spec.rb",
+     "spec/proc_like/invoking_with_local_vars_spec.rb",
+     "spec/proc_like/invoking_with_instance_vars_spec.rb",
+     "spec/proc_like/invoking_with_class_vars_spec.rb",
+     "spec/proc_like/invoking_with_args_spec.rb",
+     "spec/proc_like/others_spec.rb",
+     "spec/proc_like/invoking_with_global_vars_spec.rb",
+     "spec/proc_like/marshalling_spec.rb",
+     "spec/code_block/multiple_arities_spec.rb",
+     "spec/code_block/zero_arity_spec.rb",
+     "spec/code_block/errors_spec.rb",
+     "spec/code_block/renaming_vars_spec.rb",
+     "spec/code_block/single_arity_spec.rb",
+     "spec/code_block/optional_arity_spec.rb",
+     "spec/bounded_vars/global_vars_within_block_scope_spec.rb",
+     "spec/bounded_vars/instance_vars_within_block_scope_spec.rb",
+     "spec/bounded_vars/errors_spec.rb",
+     "spec/bounded_vars/local_vars_within_block_scope_spec.rb",
+     "spec/bounded_vars/class_vars_spec.rb",
+     "spec/bounded_vars/local_vars_spec.rb",
+     "spec/bounded_vars/global_vars_spec.rb",
+     "spec/bounded_vars/instance_vars_spec.rb",
+     "spec/bounded_vars/class_vars_within_block_scope_spec.rb",
+     "spec/spec_helper.rb"
   ]
 
   if s.respond_to? :specification_version then
