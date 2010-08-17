@@ -12,9 +12,9 @@ A SerializableProc differs from the vanilla Proc in the following 2 ways:
 
 === 1. Isolated variables
 
-Upon initializing, all variables (local, instance, class & global) within its context
-are extracted from the proc's binding, and are isolated from changes outside the proc's
-scope, thus, achieving a snapshot effect.
+By default, upon initializing, all variables (local, instance, class & global) within its
+context are extracted from the proc's binding, and are isolated from changes outside the
+proc's scope, thus, achieving a snapshot effect.
 
   require 'rubygems'
   require 'serializable_proc'
@@ -28,6 +28,28 @@ scope, thus, achieving a snapshot effect.
 
   s_proc.call # >> "lx, ix, cx, gx"
   v_proc.call # >> "ly, iy, cy, gy"
+
+Sometimes, we may want global variables to behave as truely global, meaning we don't want
+to isolate globals at all, this can be done by declaring @@_not_isolated_vars within the
+code block:
+
+  s_proc = SerializableProc.new do
+    @@_not_isolated_vars = :global # globals won't be isolated
+    $stdout << "WakeUp !!"         # $stdout is the $stdout in the execution context
+  end
+
+The following declares all variables as not isolatable:
+
+  s_proc = SerializableProc.new do
+    @@_not_isolated_vars = :global, :class, :instance, :local
+    # (blah blah)
+  end
+
+When invoking, Kernel.binding should be passed in to avoid unpleasant surprises:
+
+  s_proc.call(binding)
+
+(take a look at SerializableProc's rdoc for more details)
 
 === 2. Marshallable
 
@@ -110,15 +132,11 @@ SerializableProc has been tested to work on the following rubies:
 
 == TODO (just brain-dumping)
 
-1. Provide flexibility for user to specify whether global variables should be isolated,
-   because globals are globals, it may sometimes be useful to use/manipulate the globals
-   within the context that the SerializableProc is called, instead of when it is
-   initialized
-2. The RubyParser-based implementation probably need alot more optimization to catch up
+1. The RubyParser-based implementation probably need alot more optimization to catch up
    on ParseTree-based one
-3. Implementing alternative means of extracting the code block without requiring help
+2. Implementing alternative means of extracting the code block without requiring help
    of ParseTree or RubyParser
-4. Implement workaround to tackle line-numbering bug in JRuby, which causes the
+3. Implement workaround to tackle line-numbering bug in JRuby, which causes the
    RubyParser-based implementation to fail, for more info abt JRuby's line-numbering
    bug, see http://stackoverflow.com/questions/3454838/jruby-line-numbering-problem &
    http://jira.codehaus.org/browse/JRUBY-5014
