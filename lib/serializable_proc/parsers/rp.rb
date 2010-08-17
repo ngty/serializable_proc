@@ -3,7 +3,7 @@ class SerializableProc
   class CannotAnalyseCodeError < Exception ; end
 
   module Parsers
-    module RP
+    class RP < Base
       class << self
 
         def process(klass, file, line)
@@ -19,17 +19,7 @@ class SerializableProc
             while frag = remaining[/^([^\)]*\))/,1]
               begin
                 sexp = normalized_eval(sexp_str += frag)
-                fsexp = Sandboxer.fsexp(sexp)
-
-                runnable_code, extracted_code = [
-                  RUBY_2_RUBY.process(Sexp.from_array(fsexp.to_a)),
-                  RUBY_2_RUBY.process(Sexp.from_array(sexp.to_a))
-                ].map{|code| unescape_magic_vars(code) }
-
-                return [
-                  {:runnable => runnable_code, :extracted => extracted_code},
-                  {:runnable => fsexp, :extracted => sexp}
-                ]
+                return sexp_derivatives(sexp){|code| unescape_magic_vars(code) }
               rescue SyntaxError
                 remaining.sub!(frag,'')
               end
@@ -59,6 +49,7 @@ class SerializableProc
           end
 
           def raw_sexp_and_marker
+            # TODO: Ugly chunk, need some lovely cleanup !!
             %W{#{@klass}\.new lambda|proc|Proc\.new}.each do |declarative|
               regexp = /^((.*?)(#{declarative})(\s*(?:do|\{)\s*(?:\|(?:[^\|]*)\|\s*)?)(.*)?)$/m
               raw = raw_code
