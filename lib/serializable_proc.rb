@@ -19,9 +19,9 @@ end
 #
 # #1. Isolated variables
 #
-# Upon initializing, all variables (local, instance, class & global) within its context
-# are extracted from the proc's binding, and are isolated from changes outside the
-# proc's scope, thus, achieving a snapshot effect.
+# By default, upon initializing, all variables (local, instance, class & global) within
+# its context are extracted from the proc's binding, and are isolated from changes
+# outside the proc's scope, thus, achieving a snapshot effect.
 #
 #   require 'rubygems'
 #   require 'serializable_proc'
@@ -35,6 +35,24 @@ end
 #
 #   s_proc.call # >> "lx, ix, cx, gx"
 #   v_proc.call # >> "ly, iy, cy, gy"
+#
+# It is possible to fine-tune how variables isolation is being applied by declaring
+# @@_not_isolated_vars within the code block:
+#
+#   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+#
+#   s_proc = SerializableProc.new do
+#     @@_not_isolated_vars = :global, :class, :instance, :local
+#     [x, @x, @@x, $x].join(', ')
+#   end
+#
+#   x, @x, @@x, $x = 'ly', 'iy', 'cy', 'gy'
+#
+#   # Passing Kernel.binding is required to avoid nasty surprises
+#   s_proc.call(binding) # >> "ly, iy, cy, gy"
+#
+# Note that it is strongly-advised to append Kernel.binding as the last parameter when
+# invoking the proc to avoid unnecessary nasty surprises.
 #
 # #2. Marshallable
 #
@@ -63,6 +81,16 @@ class SerializableProc
   #
   #   def action(&block) ; SerializableProc.new(&block) ; end
   #   action { ... }
+  #
+  # Fine-tuning of variables isolation can be done by declaring @@_not_isolated_vars
+  # within the code block:
+  #
+  #   SerializableProc.new do
+  #     @@_not_isolated_vars = :global # don't isolate globals
+  #     $stdout << 'WAKE UP !!'        # $stdout won't be isolated (avoid marshal error)
+  #   end
+  #
+  # (see #call for invoking)
   #
   def initialize(&block)
     file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
@@ -160,6 +188,26 @@ class SerializableProc
   #
   #   SerializableProc.new{|i| (['hello'] * i).join(' ') }.call(2)
   #   # >> 'hello hello'
+  #
+  # In the case where variables have been declared not-isolated with @@_not_isolated_vars,
+  # invoking requires passing in +Kernel.binding+ as the last parameter avoid unexpected
+  # surprises:
+  #
+  #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
+  #   s_proc = SerializableProc.new do
+  #     @@_not_isolated_vars = :global, :class, :instance, :local
+  #     [x, @x, @@x, $x].join(', ')
+  #   end
+  #
+  #   s_proc.call
+  #   # >> raises NameError for x
+  #   # >> @x is assumed nil (undefined)
+  #   # >> raises NameError for @@x (actually this depends on if u are using 1.9.* or 1.8.*)
+  #   # >> no issue with $x (since global is, after all, a global)
+  #
+  # To ensure expected results:
+  #
+  #   s_proc.call(binding) # >> 'lx, ix, cx, gx'
   #
   def call(*params)
     if (binding = params[-1]).is_a?(::Binding)
