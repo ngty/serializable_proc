@@ -19,10 +19,10 @@ describe 'Renaming variables' do
           def test(x) ; [x, @x, @@x, $x] ; end
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           [lvar_x, ivar_x, cvar_x, gvar_x]
           def test(x) ; [x, @x, @@x, $x] ; end
-        }
+        end
       ')
     end
 
@@ -35,11 +35,11 @@ describe 'Renaming variables' do
           def test2(x) ; [x, @x, @@x, $x] ; end
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           [lvar_x, ivar_x, cvar_x, gvar_x]
           def test1(x) ; [x, @x, @@x, $x] ; end
           def test2(x) ; [x, @x, @@x, $x] ; end
-        }
+        end
       ')
     end
 
@@ -56,10 +56,10 @@ describe 'Renaming variables' do
           [x, @x, @@x, $x]
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :global
           [lvar_x, ivar_x, cvar_x, $x]
-        }
+        end
       ')
     end
 
@@ -71,10 +71,10 @@ describe 'Renaming variables' do
           [x, @x, @@x, $x]
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :class
           [lvar_x, ivar_x, @@x, gvar_x]
-        }
+        end
       ')
     end
 
@@ -86,10 +86,10 @@ describe 'Renaming variables' do
           [x, @x, @@x, $x]
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :instance
           [lvar_x, @x, cvar_x, gvar_x]
-        }
+        end
       ')
     end
 
@@ -101,10 +101,10 @@ describe 'Renaming variables' do
           [x, @x, @@x, $x]
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :local
           [x, ivar_x, cvar_x, gvar_x]
-        }
+        end
       ')
     end
 
@@ -116,10 +116,10 @@ describe 'Renaming variables' do
           [x, @x, @@x, $x]
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :global, :class
           [lvar_x, ivar_x, @@x, $x]
-        }
+        end
       ')
     end
 
@@ -131,10 +131,10 @@ describe 'Renaming variables' do
           def test(x) ; [x, @x, @@x, $x] ; end
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :global, :class
           def test(x) ; [x, @x, @@x, $x] ; end
-        }
+        end
       ')
     end
 
@@ -147,11 +147,11 @@ describe 'Renaming variables' do
           def test2(x) ; [x, @x, @@x, $x] ; end
         end
       ).should.be having_runnable_code_as('
-        lambda{
+        lambda do
           @@_not_isolated_vars = :global, :class
           def test1(x) ; [x, @x, @@x, $x] ; end
           def test2(x) ; [x, @x, @@x, $x] ; end
-        }
+        end
       ')
     end
 
