@@ -26,5 +26,5 @@ class SerializableProc
   end
 end
 
-require 'serializable_proc/parsers/pt'
-require 'serializable_proc/parsers/rp'
+require 'serializable_proc/parsers/dynamic'
+require 'serializable_proc/parsers/static'

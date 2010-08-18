@@ -1,6 +1,6 @@
 class SerializableProc
   module Parsers
-    class PT < Base
+    class Dynamic < Base
       class << self
         def process(block)
           if Object.const_defined?(:ParseTree)

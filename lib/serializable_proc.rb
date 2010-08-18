@@ -95,7 +95,7 @@ class SerializableProc
   def initialize(&block)
     file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
     @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
-    @code, @sexp = Parsers::PT.process(block) || Parsers::RP.process(self.class, @file, @line)
+    @code, @sexp = Parsers::Dynamic.process(block) || Parsers::Static.process(self.class, @file, @line)
     @binding = Binding.new(block.binding, @sexp[:extracted])
   end
 

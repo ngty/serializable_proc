@@ -3,7 +3,7 @@ class SerializableProc
   class CannotAnalyseCodeError < Exception ; end
 
   module Parsers
-    class RP < Base
+    class Static < Base
       class << self
 
         def process(klass, file, line)
