@@ -180,8 +180,8 @@ following won't work:
 SerializableProc has been tested to work on the following rubies:
 
 1. MRI 1.8.6, 1.8.7 & 1.9.1
-2. JRuby (partial, quite abit of the specs are failing due to JRuby's bug in dumping
-   a proc's line number when we do Proc#inspect)
+2. JRuby (partial, the more conservative usages work, quite abit of the specs are failing
+   due to JRuby's bug in dumping a proc's line number when we do Proc#inspect)
 
 == TODO (just brain-dumping)
 
