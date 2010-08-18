@@ -1,4 +1,4 @@
-=== 0.3.0 (Aug 18, 2010)
+=== Current
 
 * added support for defining of custom matchers that enhances static parser to handle
   more initializing cases, other than the current SerializableProc.new, Proc.new, proc
@@ -6,6 +6,7 @@
 * ensured subclasses of SerializableProc behaves exactly like SerializableProc [#ngty]
 * partially implemented workaround to ensure the more conservative usages work, quite a
   number of specs still failing though [#ngty]
+* fixed buggy support for magic variables __FILE__ & __LINE__ [#ngty]
 
 === 0.2.0 (Aug 18, 2010)
 
