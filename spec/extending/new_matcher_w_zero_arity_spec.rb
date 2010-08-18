@@ -6,7 +6,7 @@ describe 'Subclassing w zero arity' do
   expected_file = File.expand_path(__FILE__)
   expected_code = "lambda { [\"a\", \"b\"].map { |lvar_x| puts(lvar_x) } }"
 
-  behaves_like 'has support for parsing Otaky.work'
+  behaves_like 'has support for parsing Otaky.work (wo args)'
 
   should "handle block using do ... end [##{__LINE__}]" do
     (

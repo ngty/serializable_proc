@@ -12,7 +12,7 @@ class Otaky
 
 end
 
-shared 'has support for parsing Otaky.work' do
+shared 'has support for parsing Otaky.work (wo args)' do
   before { SerializableProc::Parsers::Static.matchers << 'Otaky\.work' }
   after { SerializableProc::Parsers::Static.matchers.clear }
 end
