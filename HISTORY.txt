@@ -1,8 +1,11 @@
-=== Current
+=== 0.3.0 (Aug 18, 2010)
 
 * added support for defining of custom matchers that enhances static parser to handle
   more initializing cases, other than the current SerializableProc.new, Proc.new, proc
   & lambda [#ngty]
+* ensured subclasses of SerializableProc behaves exactly like SerializableProc [#ngty]
+* partially implemented workaround (with quite a number of specs still failing) for
+  JRuby's bug in dumping line number of a proc via Proc#inspect [#ngty]
 
 === 0.2.0 (Aug 18, 2010)
 
