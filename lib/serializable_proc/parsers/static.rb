@@ -54,7 +54,7 @@ class SerializableProc
 
           def raw_sexp_and_marker
             # TODO: Ugly chunk, need some lovely cleanup !!
-            (matchers + %W{#{@klass}\.new lambda|proc|Proc\.new}).each do |declarative|
+            (%W{#{@klass}\.new lambda|proc|Proc\.new} + matchers).each do |declarative|
               regexp = /^((.*?)(#{declarative})(\s*(?:do|\{)\s*(?:\|(?:[^\|]*)\|\s*)?)(.*)?)$/m
               raw = raw_code
               lines1, lines2 = [(0 .. (@line - 2)), (@line.pred .. -1)].map{|r| raw[r] }
