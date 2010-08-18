@@ -53,43 +53,47 @@ class SerializableProc
           end
 
           def raw_sexp_and_marker
-            line = @line
             begin
-              raw_sexp_and_marker_by_lineno(@line = line)
+              raw_sexp_and_marker_by_lineno(@line)
             rescue CannotAnalyseCodeError
-              if RUBY_PLATFORM =~ /java/i
-                line += 1
-                retry
-              else
-                raise $!
-              end
+              # NOTE: Tmp fix for JRuby's buggy line-numbering within Proc#inspect
+              RUBY_PLATFORM =~ /java/i ? (@line += 1 ; retry) : raise($!)
+            ensure
+              @raw_code = nil
             end
           end
 
           def raw_sexp_and_marker_by_lineno(lineno)
-            # TODO: Ugly chunk, need some lovely cleanup !!
             (%W{#{@klass}\.new lambda|proc|Proc\.new} + matchers).each do |declarative|
-              regexp = /^((.*?)(#{declarative})(\s*(?:do|\{)\s*(?:\|(?:[^\|]*)\|\s*)?)(.*)?)$/m
-              raw = raw_code
-              lines1, lines2 = [(0 .. (lineno - 2)), (lineno.pred .. -1)].map{|r| raw[r] }
-              prepend, type, block_start, append = lines2[0].match(regexp)[2..5] rescue next
-
-              if lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*?\W(#{declarative}))+(\W.*)?$/
-                msg = "Static code analysis can only handle single occurrence of '%s' per line !!" %
-                  declarative.split('|').join("'/'")
-                raise CannotAnalyseCodeError.new(msg)
-              elsif lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*)?$/
-                marker = "__serializable_proc_marker_#{lineno}__"
-                line = "#{prepend}proc#{block_start} #{marker}; #{append}"
-                lines = lines1.join + line + lines2[1..-1].join
-                return [RUBY_PARSER.parse(lines, @file).inspect, marker]
-              end
+              ensure_no_repeated_occurrence(lineno, declarative)
+              args = raw_sexp_and_marker_args(lineno, declarative) and return args
             end
             raise CannotAnalyseCodeError.new('Cannot find specified initializer !!')
           end
 
+          def ensure_no_repeated_occurrence(lineno, declarative)
+            if raw_code[lineno.pred] =~ /^(.*?\W)?(#{declarative})(\W.*?\W(#{declarative}))+(\W.*)?$/
+              msg = "Static code analysis can only handle single occurrence of '%s' per line !!" %
+                declarative.split('|').join("'/'")
+              raise CannotAnalyseCodeError.new(msg)
+            end
+          end
+
+          def raw_sexp_and_marker_args(lineno, declarative)
+            begin
+              raise if (line = raw_code[lineno.pred]) !~ /^(.*?\W)?(#{declarative})(\W.*)?$/
+              regexp = /^((.*?)(#{declarative})(\s*(?:do|\{)\s*(?:\|(?:[^\|]*)\|\s*)?)(.*)?)$/m
+              prepend, type, block_start, append = line.match(regexp)[2..5]
+              marker = "__serializable_proc_marker_#{lineno}__"
+              raw_code[lineno.pred] = "#{prepend}proc#{block_start} #{marker}; #{append}"
+              [RUBY_PARSER.parse(raw_code.join, @file).inspect, marker]
+            rescue
+              nil
+            end
+          end
+
           def raw_code
-            File.readlines(@file)
+            @raw_code ||= File.readlines(@file)
           end
 
       end
