@@ -16,3 +16,8 @@ shared 'has support for parsing Otaky.work (wo args)' do
   before { SerializableProc::Parsers::Static.matchers << 'Otaky\.work' }
   after { SerializableProc::Parsers::Static.matchers.clear }
 end
+
+shared 'has support for parsing Otaky.work (w args)' do
+  before { SerializableProc::Parsers::Static.matchers << 'Otaky\.work\W.*?\W' }
+  after { SerializableProc::Parsers::Static.matchers.clear }
+end
