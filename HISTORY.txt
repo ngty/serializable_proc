@@ -1,7 +1,8 @@
-=== Current
+===  0.3.1 (Aug 18, 2010)
 
 * @@_not_isolated_vars now supports :all, which is an alias of :global + :local +
   :instance + :class [#ngty]
+* cleaned up monstrous code [#ngty]
 
 === 0.3.0 (Aug 18, 2010)
 
