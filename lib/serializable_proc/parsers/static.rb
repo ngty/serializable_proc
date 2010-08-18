@@ -53,11 +53,25 @@ class SerializableProc
           end
 
           def raw_sexp_and_marker
+            line = @line
+            begin
+              raw_sexp_and_marker_by_lineno(@line = line)
+            rescue CannotAnalyseCodeError
+              if RUBY_PLATFORM =~ /java/i
+                line += 1
+                retry
+              else
+                raise $!
+              end
+            end
+          end
+
+          def raw_sexp_and_marker_by_lineno(lineno)
             # TODO: Ugly chunk, need some lovely cleanup !!
             (%W{#{@klass}\.new lambda|proc|Proc\.new} + matchers).each do |declarative|
               regexp = /^((.*?)(#{declarative})(\s*(?:do|\{)\s*(?:\|(?:[^\|]*)\|\s*)?)(.*)?)$/m
               raw = raw_code
-              lines1, lines2 = [(0 .. (@line - 2)), (@line.pred .. -1)].map{|r| raw[r] }
+              lines1, lines2 = [(0 .. (lineno - 2)), (lineno.pred .. -1)].map{|r| raw[r] }
               prepend, type, block_start, append = lines2[0].match(regexp)[2..5] rescue next
 
               if lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*?\W(#{declarative}))+(\W.*)?$/
@@ -65,7 +79,7 @@ class SerializableProc
                   declarative.split('|').join("'/'")
                 raise CannotAnalyseCodeError.new(msg)
               elsif lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*)?$/
-                marker = "__serializable_proc_marker_#{@line}__"
+                marker = "__serializable_proc_marker_#{lineno}__"
                 line = "#{prepend}proc#{block_start} #{marker}; #{append}"
                 lines = lines1.join + escape_magic_vars(line + lines2[1..-1].join)
                 return [RUBY_PARSER.parse(lines).inspect, marker]
