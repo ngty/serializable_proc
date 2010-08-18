@@ -1,3 +1,9 @@
+=== Current
+
+* added support for defining of custom matchers that enhances static parser to handle
+  more initializing cases, other than the current SerializableProc.new, Proc.new, proc
+  & lambda [#ngty]
+
 === 0.2.0 (Aug 18, 2010)
 
 * added SerializableProc#to_sexp to facilitate retrieving of sexp representation of the
