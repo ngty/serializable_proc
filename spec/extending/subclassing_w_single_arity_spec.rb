@@ -1,8 +1,4 @@
-require File.join(File.dirname(__FILE__), '..', 'spec_helper')
-
-module Otaky
-  class MagicProc < ::SerializableProc ; end
-end
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe 'Subclassing w single arity' do
 

@@ -1,13 +1,8 @@
-require File.join(File.dirname(__FILE__), '..', 'spec_helper')
-
-module Otaky
-  class MagicProc < ::SerializableProc ; end
-end
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe 'Subclassing w multiple arities' do
 
   extend SerializableProc::Spec::Helpers
-
   expected_file = File.expand_path(__FILE__)
   expected_code = "lambda { |lvar_arg1, lvar_arg2| [\"a\", \"b\"].map { |lvar_x| puts(lvar_x) } }"
 
