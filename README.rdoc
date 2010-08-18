@@ -78,14 +78,17 @@ to its static analysis nature (see 'Gotchas' section).
 SerializableProc relies on ParseTree or RubyParser to do code extraction. While running
 in ParseTree mode, thanks to the goodness of dynamic code analysis, SerializableProc
 performs faster by a magnitude of abt 7.5 times for the same ruby, as illustrated with
-the following benchmark results (obtained from running the specs suite):
+the following benchmark results:
 
-  MRI & implementation    user      system    total     real
-  1.8.7p299 (ParseTree)   0.000000  0.000000  1.310000  1.312676
-  1.8.7p299 (RubyParser)  0.000000  0.010000  9.560000  9.706455
-  1.9.1p376 (RubyParser)  0.010000  0.010000  8.240000  8.288799
+  MRI & implementation    user      system    total      real
+  1.8.7p299 (ParseTree)   0.000000  0.000000  3.510000   3.660623
+  1.8.7p299 (RubyParser)  0.000000  0.000000  20.780000  21.328566
+  1.9.1p376 (RubyParser)  0.010000  0.000000  16.990000  17.370586
 
-(the above is run on my x86_64-linux):
+Note:
+* the above are obtained from running the specs suite of 393 specifications with 1330
+  requirements
+* hardware & OS specs: x86_64 Intel(R) Core(TM)2 Duo CPU P8600 @ 2.40GHz
 
 == Gotchas
 
