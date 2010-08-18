@@ -42,7 +42,7 @@ end
 #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
 #
 #   s_proc = SerializableProc.new do
-#     @@_not_isolated_vars = :global, :class, :instance, :local
+#     @@_not_isolated_vars = :all
 #     [x, @x, @@x, $x].join(', ')
 #   end
 #
@@ -51,8 +51,17 @@ end
 #   # Passing Kernel.binding is required to avoid nasty surprises
 #   s_proc.call(binding) # >> "ly, iy, cy, gy"
 #
+# Supported values include :global, :class, :instance, :local & :all, with :all
+# overriding all others. This can also be used as a workaround for variables that cannot
+# be serialized:
+#
+#   SerializableProc.new do
+#     @@_not_isolated_vars = :global # don't isolate globals
+#     $stdout << 'WAKE UP !!'        # $stdout won't be isolated (avoid marshal error)
+#   end
+#
 # Note that it is strongly-advised to append Kernel.binding as the last parameter when
-# invoking the proc to avoid unnecessary nasty surprises.
+# invoking the proc to avoid unnecessary nasty surprises. (see #call for more details)
 #
 # #2. Marshallable
 #
@@ -81,16 +90,6 @@ class SerializableProc
   #
   #   def action(&block) ; SerializableProc.new(&block) ; end
   #   action { ... }
-  #
-  # Fine-tuning of variables isolation can be done by declaring @@_not_isolated_vars
-  # within the code block:
-  #
-  #   SerializableProc.new do
-  #     @@_not_isolated_vars = :global # don't isolate globals
-  #     $stdout << 'WAKE UP !!'        # $stdout won't be isolated (avoid marshal error)
-  #   end
-  #
-  # (see #call for invoking)
   #
   def initialize(&block)
     file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]

@@ -38,10 +38,11 @@ code block:
     $stdout << "WakeUp !!"         # $stdout is the $stdout in the execution context
   end
 
-The following declares all variables as not isolatable:
+Supported values are :global, :class, :instance, :local & :all, with :all overriding
+all others. The following declares all variables as not isolatable:
 
   s_proc = SerializableProc.new do
-    @@_not_isolated_vars = :global, :class, :instance, :local
+    @@_not_isolated_vars = :all
     ...
   end
 
