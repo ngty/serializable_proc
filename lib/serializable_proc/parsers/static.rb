@@ -23,7 +23,7 @@ class SerializableProc
             while frag = remaining[/^([^\)]*\))/,1]
               begin
                 sexp = normalized_eval(sexp_str += frag)
-                return sexp_derivatives(sexp){|code| unescape_magic_vars(code) }
+                return sexp_derivatives(sexp)
               rescue SyntaxError
                 remaining.sub!(frag,'')
               end
@@ -81,23 +81,11 @@ class SerializableProc
               elsif lines2[0] =~ /^(.*?\W)?(#{declarative})(\W.*)?$/
                 marker = "__serializable_proc_marker_#{lineno}__"
                 line = "#{prepend}proc#{block_start} #{marker}; #{append}"
-                lines = lines1.join + escape_magic_vars(line + lines2[1..-1].join)
-                return [RUBY_PARSER.parse(lines).inspect, marker]
+                lines = lines1.join + line + lines2[1..-1].join
+                return [RUBY_PARSER.parse(lines, @file).inspect, marker]
               end
             end
             raise CannotAnalyseCodeError.new('Cannot find specified initializer !!')
-          end
-
-          def escape_magic_vars(s)
-            %w{__FILE__ __LINE__}.inject(s) do |s, var|
-              s.gsub(var, "__serializable_proc_#{var.downcase}__")
-            end
-          end
-
-          def unescape_magic_vars(s)
-            %w{__FILE__ __LINE__}.inject(s) do |s, var|
-              s.gsub("__serializable_proc_#{var.downcase}__", var)
-            end
           end
 
           def raw_code
