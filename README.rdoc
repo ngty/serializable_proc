@@ -42,7 +42,7 @@ The following declares all variables as not isolatable:
 
   s_proc = SerializableProc.new do
     @@_not_isolated_vars = :global, :class, :instance, :local
-    # (blah blah)
+    ...
   end
 
 When invoking, Kernel.binding should be passed in to avoid unpleasant surprises:
@@ -101,14 +101,14 @@ perfect (yet), pls take note of the following:
 The following initializations throw SerializableProc::CannotAnalyseCodeError:
 
   # Multiple SerializableProc.new per line
-  SerializableProc.new { x } ; SerializableProc.new { y }
+  SerializableProc.new { ... } ; SerializableProc.new { ... }
 
   # Multiple lambda per line (the same applies to proc & Proc.new)
-  x_proc = lambda { x } ; y_proc = lambda { y }
+  x_proc = lambda { ... } ; y_proc = lambda { ... }
   SerializableProc.new(&x_proc)
 
   # Mixed lambda, proc & Proc.new per line
-  x_proc = proc { x } ; y_proc = lambda { y }
+  x_proc = proc { ... } ; y_proc = lambda { ... }
   SerializableProc.new(&x_proc)
 
 === 2. Limited ways to initialize code blocks
@@ -116,29 +116,79 @@ The following initializations throw SerializableProc::CannotAnalyseCodeError:
 Code block must be initialized with lambda, proc, Proc.new & SerializableProc.new,
 the following will throw SerializableProc::CannotAnalyseCodeError:
 
-  def create_serializable_proc(&block)
+  def create_magic_proc(&block)
     SerializableProc.new(&block)
   end
 
-  create_serializable_proc { x }
+  create_magic_proc { ... }
 
 But the following will work as expected:
 
-  x_proc = lambda { x }
-  create_serializable_proc(&x_proc)
+  x_proc = lambda { ... }
+  create_magic_proc(&x_proc)
+
+There are several strategies to workaround this limitation:
+
+==== 2.1. Subclassing SerializableProc
+
+Any subclass of SerializableProc shows traits of a SerializableProc:
+
+  class MagicProc < SerializableProc ; end
+  m_proc = MagicProc.new { ... } # m_proc walks & quacks like a SerializableProc
+
+==== 2.2. Adding custom matcher(s)
+
+To support more match cases, we can declare new matchers:
+
+  def work(&block)
+    s_proc = SerializableProc.new(&block)
+    ...
+  end
+
+  SerializableProc::Parsers::Static.matchers << 'create_magic_proc'
+  work { ... }
+
+Or if the method above takes arguments:
+
+  def create_magic_proc(*args, &block)
+    s_proc = SerializableProc.new(&block)
+    ...
+  end
+
+  SerializableProc::Parsers::Static.matchers << 'create_magic_proc\W+.*?\W+'
+  create_magic_proc(1, :a => 2, :b => 3) { ... }
+
+=== 3. One liner for ...
+
+This is embarassing, but being flexible can aggrevates performance even more.
+Currently, the declarative (eg. lambda, proc, SerializableProc.new, Proc.new,
+subclasses of SerializableProc, & any user-defined matcher(s)), & the start of
+the code-block (the 'do' & '{' chars) must be on the same line. Meaning the
+following won't work:
+
+  SerializableProc.new \
+    do
+      ...
+    end
+
+  create_magic_proc(
+    1, :a => 2
+  ) { ... }
 
 == Supported Rubies
 
 SerializableProc has been tested to work on the following rubies:
 
 1. MRI 1.8.6, 1.8.7 & 1.9.1
+2. JRuby (partial, quite abit of the specs are failing due to JRuby's bug in dumping
+   a proc's line number when we do Proc#inspect)
 
 == TODO (just brain-dumping)
 
 1. The RubyParser-based implementation probably need alot more optimization to catch up
    on ParseTree-based one
-2. Implementing alternative means of extracting the code block without requiring help
-   of ParseTree or RubyParser
+2. Implementing alternative means (if possible) of extracting the code block without
+   requiring help of ParseTree or RubyParser
 3. Implement workaround to tackle line-numbering bug in JRuby, which causes the
    RubyParser-based implementation to fail, for more info abt JRuby's line-numbering
    bug, see http://stackoverflow.com/questions/3454838/jruby-line-numbering-problem &
