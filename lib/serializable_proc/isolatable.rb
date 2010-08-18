@@ -47,7 +47,8 @@ class SerializableProc
           types.map{|t| t[0].chr }
         else
           sexp_str = Sexp.from_array(diff).inspect
-          types.map{|t| t[0].chr unless sexp_str.include?("s(:lit, :#{t})") }.compact
+          sexp_str.include?("s(:lit, :all)") ? [] :
+            types.map{|t| t[0].chr unless sexp_str.include?("s(:lit, :#{t})") }.compact
         end
       end
 

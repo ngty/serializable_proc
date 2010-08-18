@@ -19,6 +19,15 @@ describe 'Extracting local vars within block scope' do
       }
   end
 
+  should "not handle if @@_mingle_vars includes :all" do
+    x = 'ox'
+    should_have_empty_binding \
+      SerializableProc.new {
+        @@_mingle_vars = :all
+        def test ; x = 'lx' ; end
+      }
+  end
+
   should "not handle if @@_mingle_vars excludes :local" do
     x = 'ox'
     should_have_empty_binding \

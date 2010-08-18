@@ -27,7 +27,16 @@ describe 'Extracting class vars' do
     @@x, @@y = 'awe', 'some'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_not_isolated_vars = :class;
+        @@_not_isolated_vars = :class
+        @@x + @@y
+      }
+  end
+
+  should 'not handle outer-scoped ones if @@_not_isolated_vars includes :all' do
+    @@x, @@y = 'awe', 'some'
+    should_have_empty_binding \
+      SerializableProc.new {
+        @@_not_isolated_vars = :all
         @@x + @@y
       }
   end
@@ -36,7 +45,17 @@ describe 'Extracting class vars' do
     @@x, @@y = 'awe', 'some'
     should_have_empty_binding \
       SerializableProc.new {
-        @@_not_isolated_vars = :class;
+        @@_not_isolated_vars = :class
+        @@z = 'wonder'
+        %w{a b}.each{ puts @@z, @@x, @@y }
+      }
+  end
+
+  should "not handle inner-scoped ones if @@_not_isolated_vars includes :all" do
+    @@x, @@y = 'awe', 'some'
+    should_have_empty_binding \
+      SerializableProc.new {
+        @@_not_isolated_vars = :all
         @@z = 'wonder'
         %w{a b}.each{ puts @@z, @@x, @@y }
       }

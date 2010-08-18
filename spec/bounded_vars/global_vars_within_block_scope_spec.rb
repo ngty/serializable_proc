@@ -19,6 +19,15 @@ describe 'Extracting global vars within block scope' do
       }
   end
 
+  should "not handle if @@_not_isolated_vars includes :all" do
+    $x = 'ox'
+    should_have_empty_binding \
+      SerializableProc.new {
+        @@_not_isolated_vars = :all
+        def test ; $x = 'gx' ; end
+      }
+  end
+
   should "not handle if @@_not_isolated_vars excludes :global" do
     $x = 'ox'
     should_have_empty_binding \

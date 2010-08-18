@@ -1,5 +1,10 @@
 === Current
 
+* @@_not_isolated_vars now supports :all, which is an alias of :global + :local +
+  :instance + :class [#ngty]
+
+=== 0.3.0 (Aug 18, 2010)
+
 * added support for defining of custom matchers that enhances static parser to handle
   more initializing cases, other than the current SerializableProc.new, Proc.new, proc
   & lambda [#ngty]
