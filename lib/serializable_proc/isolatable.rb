@@ -39,12 +39,6 @@ class SerializableProc
         "#{n_sexp_str}#{o_sexp_str}"
       end
 
-      def isolated_var(var)
-        @translate_var_maps ||= {'@' => 'ivar_', '@@' => 'cvar_', '$' => 'gvar_', '' => 'lvar_'}
-        m = var.to_s.match(/^(|@|@@|\$)(\w+)$/)
-        var.to_s.sub(m[1], @translate_var_maps[m[1]]).to_sym
-      end
-
       def isolated_types(sexp)
         o_sexp_arry = sexp.to_a
         n_sexp = sexp.gsub(s(:cvdecl, :@@_not_isolated_vars, SexpAny.new), nil)
