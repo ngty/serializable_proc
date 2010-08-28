@@ -1,18 +1,11 @@
 require 'rubygems'
 require 'forwardable'
+require 'sourcify'
 require 'ruby2ruby'
+
 require 'serializable_proc/marshalable'
 require 'serializable_proc/isolatable'
-require 'serializable_proc/parsers'
 require 'serializable_proc/binding'
-require 'serializable_proc/fixes'
-
-begin
-  require 'parse_tree'
-  require 'parse_tree_extensions'
-rescue LoadError
-  require 'ruby_parser'
-end
 
 ##
 # SerializableProc differs from the vanilla Proc in 2 ways:
@@ -72,8 +65,9 @@ end
 #
 class SerializableProc
 
+  include Isolatable
   include Marshalable
-  marshal_attrs :file, :line, :code, :arity, :binding, :sexp
+  marshal_attrs :file, :line, :codes, :arity, :binding, :sexps
 
   ##
   # Creates a new instance of SerializableProc by passing in a code block, in the process,
@@ -92,10 +86,12 @@ class SerializableProc
   #   action { ... }
   #
   def initialize(&block)
-    file, line = /^#<Proc:0x[0-9A-Fa-f]+@(.+):(\d+).*?>$/.match(block.inspect)[1..2]
-    @file, @line, @arity = File.expand_path(file), line.to_i, block.arity
-    @code, @sexp = Parsers::Dynamic.process(block) || Parsers::Static.process(self.class, file, @line)
-    @binding = Binding.new(block.binding, @sexp[:extracted])
+    e_code, e_sexp = block.to_source, block.to_sexp
+    r_sexp, r_code = isolated_sexp_and_code(e_sexp)
+    @arity, @file, @line = block.arity, *block.source_location
+    @codes = {:extracted => e_code, :runnable => r_code}
+    @sexps = {:extracted => e_sexp, :runnable => r_sexp}
+    @binding = Binding.new(block.binding, r_sexp)
   end
 
   ##
@@ -132,9 +128,9 @@ class SerializableProc
   #
   def to_proc(binding = nil)
     if binding
-      eval(@code[:runnable], @binding.eval!(binding), @file, @line)
+      eval(@codes[:runnable], @binding.eval!(binding), @file, @line)
     else
-      @proc ||= eval(@code[:runnable], @binding.eval!, @file, @line)
+      @proc ||= eval(@codes[:runnable], @binding.eval!, @file, @line)
     end
   end
 
@@ -159,7 +155,7 @@ class SerializableProc
   # * global variable -> replaced '$ with 'gvar_'
   #
   def to_s(debug = false)
-    @code[debug ? :runnable : :extracted]
+    @codes[debug ? :runnable : :extracted]
   end
 
   ##
@@ -169,7 +165,7 @@ class SerializableProc
   #   SerializableProc.new { [x, @x, @@x, $x].join(', ') }.to_sexp
   #
   def to_sexp(debug = false)
-    @sexp[debug ? :runnable : :extracted]
+    @sexps[debug ? :runnable : :extracted]
   end
 
   ##

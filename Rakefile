@@ -8,39 +8,13 @@ begin
     gem.name = "serializable_proc"
     gem.summary = %Q{Proc that can be serialized (as the name suggests)}
     gem.description = %Q{
-      Give & take, serializing a ruby proc is possible, though not a perfect one.
-      Requires either ParseTree (faster) or RubyParser (& Ruby2Ruby).
+      Give & take, serializing a ruby proc is possible, though not a perfect one (yet).
     }
     gem.email = "ngty77@gmail.com"
     gem.homepage = "http://github.com/ngty/serializable_proc"
     gem.authors = ["NgTzeYang"]
-    gem.add_dependency "ruby2ruby", ">= 1.2.4"
+    gem.add_dependency "sourcify", ">= 0.1.0"
     gem.add_development_dependency "bacon", ">= 0"
-    # Plus one of the following groups:
-    #
-    # 1). ParseTree (better performance + dynamic goodness, but not supported on java & 1.9.*)
-    # >> gem.add_dependency "ParseTree", ">= 3.0.5"
-    #
-    # 2). RubyParser (supported for all)
-    # >> gem.add_dependency "ruby_parser", ">= 2.0.4"
-
-    unless RUBY_PLATFORM =~ /java/i or RUBY_VERSION.include?('1.9.')
-      gem.post_install_message = %Q{
- /////////////////////////////////////////////////////////////////////////////////
-
-  ** SerializableProc **
-
-  You are installing SerializableProc on a ruby platform & version that supports
-  ParseTree. With ParseTree, u can enjoy better performance of SerializableProc,
-  as well as other dynamic code analysis goodness, as compared to the default
-  implementation using RubyParser's less flexible static code analysis.
-
-  Anyway, u have been informed, SerializableProc will fallback on its default
-  implementation using RubyParser.
-
- /////////////////////////////////////////////////////////////////////////////////
-      }
-    end
   end
 
   Jeweler::GemcutterTasks.new

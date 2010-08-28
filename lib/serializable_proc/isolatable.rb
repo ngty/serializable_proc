@@ -1,60 +1,91 @@
 class SerializableProc
   module Isolatable
 
+    MAPPERS = {'l' => '', 'c' => '@@', 'i' => '@', 'g' => '$'}
+    ISOLATION_VAR = :@@_not_isolated_vars
+    BLOCK_SCOPES = [:class, :sclass, :defn, :module]
+
     protected
 
-      def isolated_sexp(sexp)
-        eval (types = isolated_types(sexp)).empty? ? sexp.inspect : (
-          bypass_scoping_by_block(sexp) do |sexp_str|
-            # NOTE: for performance issue, we play around with the sexp string, rather
-            # than the actual sexp.
-            isolated_sexp_str_for_typed_vars(sexp_str, types)
+      def isolatable_vars(sexp)
+        sexp = sexp.to_a if sexp.is_a?(Sexp)
+        return if BLOCK_SCOPES.include?(sexp[0])
+        sexp.inject({}) do |memo, e|
+          if e.is_a?(Array)
+            memo.merge(isolatable_vars(e) || {})
+          elsif e.to_s =~ /^((l|c|g|i)var_(\w+))$/
+            memo.merge((MAPPERS[$2] + $3).to_sym => $1.to_sym)
+          else
+            memo
           end
-        )
-      end
-
-      def bypass_scoping_by_block(sexp)
-        tmp_marker = :_serializable_proc_block_scope_marker_
-        s_sexp = sexp.gsub(s(:scope, s(:block, SexpAny.new)), tmp_marker)
-        pattern = %r{^#{Regexp.quote(s_sexp.inspect).gsub(tmp_marker.inspect,'(.*?)')}$}
-        orig_blocks = sexp.inspect.match(pattern)[1..-1] rescue []
-        n_sexp_str = yield(s_sexp.inspect)
-        orig_blocks.inject(n_sexp_str) do |sexp_str, block_sexp_str|
-          sexp_str.sub(tmp_marker.inspect, block_sexp_str)
         end
       end
 
-      def isolated_sexp_str_for_typed_vars(o_sexp_str, types)
-        n_sexp_str = nil
-        var_pattern = /^(.*?s\(:)((#{types.join('|')})(asgn|var|vdecl))(,\ :)((|@|@@|\$)([\w]+))(\)|,)/
-
-        while m = o_sexp_str.match(var_pattern)
-          orig, prepend, _, type, declare, join, var, _, name, append = m[0..-1]
-          n_sexp_str = isolatable?(var) ?
-            "#{n_sexp_str}#{prepend}l#{declare.sub('vdecl','asgn')}#{join}#{type}var_#{name}#{append}" :
-            "#{n_sexp_str}#{orig}"
-          o_sexp_str.sub!(orig,'')
-        end
-
-        "#{n_sexp_str}#{o_sexp_str}"
+      def isolated_sexp_and_code(sexp)
+        sexp_arry, @types = sexp.to_a, isolated_types(sexp).join('|')
+        sexp_arry = isolated_sexp_arry(sexp_arry) unless @types.empty?
+        [
+          Sexp.from_array(sexp_arry),
+          Ruby2Ruby.new.process(Sexp.from_array(sexp_arry))
+        ]
       end
+
+    private
 
       def isolated_types(sexp)
-        o_sexp_arry = sexp.to_a
-        n_sexp = sexp.gsub(s(:cvdecl, :@@_not_isolated_vars, SexpAny.new), nil)
-        types = %w{global instance local class}
-
-        if (diff = o_sexp_arry - n_sexp.to_a).empty?
-          types.map{|t| t[0].chr }
+        if (declarative = isolatable_declarative(sexp)).empty?
+          MAPPERS.keys
+        elsif declarative.include?('all')
+          []
         else
-          sexp_str = Sexp.from_array(diff).inspect
-          sexp_str.include?("s(:lit, :all)") ? [] :
-            types.map{|t| t[0].chr unless sexp_str.include?("s(:lit, :#{t})") }.compact
+          MAPPERS.keys - declarative.map{|e| e[0].chr }
+        end
+      end
+
+      def isolated_sexp_arry(array)
+        return if BLOCK_SCOPES.include?(array[0])
+        array.map do |e|
+          case e
+          when Array
+            if e.size == 2 && e[0].to_s =~ /^(#{@types})var$/
+              isolatable?(var = e[1]) ? [:lvar, isolated_var(var,$1)] : e
+            elsif e[0].to_s =~ /^(#{@types})(vdel|asgn)$/ && isolatable?(var = e[1])
+              isolated_sexp_arry([:lasgn, isolated_var(var,$1), *e[2..-1]])
+            else
+              isolated_sexp_arry(e)
+            end
+          else
+            e
+          end
+        end
+      end
+
+      def isolated_var(var, type = nil)
+        m = var.to_s.match(/^(\W*)(\w+)$/)[1..2]
+        type ||= MAPPERS.invert[m[0]]
+        :"#{type}var_#{m[1]}"
+      end
+
+      def isolatable_declarative(sexp)
+        case sexp
+        when Sexp
+          pattern = s(:cvdecl, ISOLATION_VAR, SexpAny.new)
+          isolatable_declarative(sexp.to_a - sexp.gsub(pattern, nil).to_a)
+        when Array
+          if sexp[0] == :cvdecl && sexp[1] == ISOLATION_VAR
+            types, pattern = [], /\[:lit,\ :(\w+)\]/
+            sexp[-1].inspect.gsub(pattern){|s| s =~ pattern; types << $1 }
+            types
+          else
+            sexp.select{|e| e.is_a?(Array) }.map do |e|
+              isolatable_declarative(e)
+            end.flatten.compact
+          end
         end
       end
 
       def isolatable?(var)
-        var != '@@_not_isolated_vars'
+        var.to_s != ISOLATION_VAR.to_s
       end
 
   end

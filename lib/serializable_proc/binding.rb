@@ -9,8 +9,9 @@ class SerializableProc
     marshal_attr :vars
 
     def initialize(binding, sexp)
-      non_block_scoped_sexp = sexp.gsub(s(:scope, s(:block, SexpAny.new)), nil)
-      @vars = extract_bounded_vars(binding, non_block_scoped_sexp) || {}
+      @vars = isolatable_vars(sexp).inject({}) do |memo, (o_var, n_var)|
+        memo.merge(n_var => bounded_val(o_var, binding))
+      end
     end
 
     def eval!(binding = nil)
@@ -31,22 +32,9 @@ class SerializableProc
         @declare_vars ||= @vars.map{|(k,v)| "#{k} = Marshal.load(%|#{mdump(v)}|)" } * '; '
       end
 
-      def extract_bounded_vars(binding, sexp)
-        unless (types = isolated_types(sexp)).empty?
-          vars, pattern = {}, %r{s\(:((?:#{types.join('|')})var),\ :((?:|@|@@|\$)(\w+))\)}
-          sexp.inspect.gsub(pattern) do |s|
-            type, o_var, name = s.match(pattern)[1..3]
-            if isolatable?(o_var)
-              vars.update(:"#{type}_#{name}" => bounded_val(o_var, binding))
-            end
-          end
-          vars
-        end
-      end
-
       def bounded_val(var, binding)
         begin
-          val = eval(var, binding) rescue nil
+          val = eval(var.to_s, binding) rescue nil
           mclone(val)
         rescue TypeError
           raise CannotSerializeVariableError.new("Variable #{var} cannot be serialized !!")
