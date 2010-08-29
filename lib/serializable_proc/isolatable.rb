@@ -43,7 +43,7 @@ class SerializableProc
       end
 
       def isolated_sexp_arry(array)
-        return if BLOCK_SCOPES.include?(array[0])
+        return array if BLOCK_SCOPES.include?(array[0])
         array.map do |e|
           case e
           when Array
