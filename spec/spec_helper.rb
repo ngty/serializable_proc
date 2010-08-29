@@ -20,7 +20,7 @@ Bacon.summary_on_exit
 
 class SerializableProc
 
-  attr_reader :code, :file, :line
+  attr_reader :codes, :file, :line
 
   def binding_dump
     @binding.instance_variable_get(:@vars)
@@ -41,7 +41,7 @@ class SerializableProc
 
       def having_runnable_code_as(code)
         lambda do |s_proc|
-          s_proc.code[:runnable].should.be having_same_semantics_as(code)
+          s_proc.codes[:runnable].should.be having_same_semantics_as(code)
         end
       end
 
@@ -51,7 +51,7 @@ class SerializableProc
 
       def having_expected_proc_attrs(file, line, code)
         lambda do |s_proc|
-          s_proc.code[:runnable].should.be having_same_semantics_as(code)
+          s_proc.codes[:runnable].should.be having_same_semantics_as(code)
           s_proc.file.should.equal(file)
           s_proc.line.should.equal(line)
         end
@@ -92,7 +92,7 @@ class SerializableProc
         test_args.each do |line, block|
           should "handle proc variable [##{line}]" do
             s_proc = SerializableProc.new(&block)
-            s_proc.code[:runnable].should.be having_same_semantics_as(code)
+            s_proc.codes[:runnable].should.be having_same_semantics_as(code)
             s_proc.file.should.equal(file)
             s_proc.line.should.equal(line.succ)
           end
