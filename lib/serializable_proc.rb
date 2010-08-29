@@ -2,6 +2,7 @@ require 'rubygems'
 require 'forwardable'
 require 'sourcify'
 require 'ruby2ruby'
+require 'sexp_processor'
 
 require 'serializable_proc/marshalable'
 require 'serializable_proc/isolatable'
