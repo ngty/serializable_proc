@@ -1,4 +1,8 @@
-===  0.3.1 (Aug 18, 2010)
+=== 0.4.0 (Sep 10, 2010)
+
+* code extraction is now delegated to more well-tested & robust sourcify [#ngty]
+
+=== 0.3.1 (Aug 18, 2010)
 
 * @@_not_isolated_vars now supports :all, which is an alias of :global + :local +
   :instance + :class [#ngty]

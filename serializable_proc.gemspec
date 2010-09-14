@@ -5,14 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = %q{serializable_proc}
-  s.version = "0.2.0"
+  s.version = "0.4.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["NgTzeYang"]
-  s.date = %q{2010-08-18}
+  s.date = %q{2010-09-15}
   s.description = %q{
-      Give & take, serializing a ruby proc is possible, though not a perfect one.
-      Requires either ParseTree (faster) or RubyParser (& Ruby2Ruby).
+      Give & take, serializing a ruby proc is possible, though not a perfect one (yet).
     }
   s.email = %q{ngty77@gmail.com}
   s.extra_rdoc_files = [
@@ -32,9 +31,6 @@ Gem::Specification.new do |s|
      "lib/serializable_proc/fixes.rb",
      "lib/serializable_proc/isolatable.rb",
      "lib/serializable_proc/marshalable.rb",
-     "lib/serializable_proc/parsers.rb",
-     "lib/serializable_proc/parsers/pt.rb",
-     "lib/serializable_proc/parsers/rp.rb",
      "serializable_proc.gemspec",
      "spec/bounded_vars/class_vars_spec.rb",
      "spec/bounded_vars/class_vars_within_block_scope_spec.rb",
@@ -45,12 +41,8 @@ Gem::Specification.new do |s|
      "spec/bounded_vars/instance_vars_within_block_scope_spec.rb",
      "spec/bounded_vars/local_vars_spec.rb",
      "spec/bounded_vars/local_vars_within_block_scope_spec.rb",
-     "spec/code_block/errors_spec.rb",
-     "spec/code_block/multiple_arities_spec.rb",
-     "spec/code_block/optional_arity_spec.rb",
+     "spec/code_block/magic_vars_spec.rb",
      "spec/code_block/renaming_vars_spec.rb",
-     "spec/code_block/single_arity_spec.rb",
-     "spec/code_block/zero_arity_spec.rb",
      "spec/proc_like/extras_spec.rb",
      "spec/proc_like/invoking_with_args_spec.rb",
      "spec/proc_like/invoking_with_class_vars_spec.rb",
@@ -62,21 +54,6 @@ Gem::Specification.new do |s|
      "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/ngty/serializable_proc}
-  s.post_install_message = %q{
- /////////////////////////////////////////////////////////////////////////////////
-
-  ** SerializableProc **
-
-  You are installing SerializableProc on a ruby platform & version that supports
-  ParseTree. With ParseTree, u can enjoy better performance of SerializableProc,
-  as well as other dynamic code analysis goodness, as compared to the default
-  implementation using RubyParser's less flexible static code analysis.
-
-  Anyway, u have been informed, SerializableProc will fallback on its default
-  implementation using RubyParser.
-
- /////////////////////////////////////////////////////////////////////////////////
-      }
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
@@ -90,12 +67,8 @@ Gem::Specification.new do |s|
      "spec/proc_like/others_spec.rb",
      "spec/proc_like/invoking_with_global_vars_spec.rb",
      "spec/proc_like/marshalling_spec.rb",
-     "spec/code_block/multiple_arities_spec.rb",
-     "spec/code_block/zero_arity_spec.rb",
-     "spec/code_block/errors_spec.rb",
+     "spec/code_block/magic_vars_spec.rb",
      "spec/code_block/renaming_vars_spec.rb",
-     "spec/code_block/single_arity_spec.rb",
-     "spec/code_block/optional_arity_spec.rb",
      "spec/bounded_vars/global_vars_within_block_scope_spec.rb",
      "spec/bounded_vars/instance_vars_within_block_scope_spec.rb",
      "spec/bounded_vars/errors_spec.rb",
@@ -113,14 +86,20 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<ruby2ruby>, [">= 1.2.4"])
+      s.add_runtime_dependency(%q<sourcify>, [">= 0.2.2.1"])
+      s.add_runtime_dependency(%q<ruby2ruby>, [">= 1.2.5"])
+      s.add_runtime_dependency(%q<sexp_processor>, [">= 3.0.5"])
       s.add_development_dependency(%q<bacon>, [">= 0"])
     else
-      s.add_dependency(%q<ruby2ruby>, [">= 1.2.4"])
+      s.add_dependency(%q<sourcify>, [">= 0.2.2.1"])
+      s.add_dependency(%q<ruby2ruby>, [">= 1.2.5"])
+      s.add_dependency(%q<sexp_processor>, [">= 3.0.5"])
       s.add_dependency(%q<bacon>, [">= 0"])
     end
   else
-    s.add_dependency(%q<ruby2ruby>, [">= 1.2.4"])
+    s.add_dependency(%q<sourcify>, [">= 0.2.2.1"])
+    s.add_dependency(%q<ruby2ruby>, [">= 1.2.5"])
+    s.add_dependency(%q<sexp_processor>, [">= 3.0.5"])
     s.add_dependency(%q<bacon>, [">= 0"])
   end
 end
