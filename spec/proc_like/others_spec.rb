@@ -92,7 +92,9 @@ describe 'Being proc like' do
 
   describe '>> binding' do
     should 'raise NotImplementedError' do
-      lambda { SerializableProc.new { x }.binding }.should.raise(NotImplementedError)
+      lambda {
+        SerializableProc.new { x }.binding
+      }.should.raise(NotImplementedError)
     end
     # should 'return binding that contains duplicated contextual reference values' do
     #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'

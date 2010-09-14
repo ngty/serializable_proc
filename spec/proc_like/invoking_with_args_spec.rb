@@ -11,7 +11,9 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
       end
 
       should 'return yield result given single arg' do
-        s_proc = SerializableProc.new {|i| %w{b c}.map{|x| x*i } }
+        s_proc = SerializableProc.new do |i|
+          %w{b c}.map{|x| x*i }
+        end
         s_proc.send(invoke, 2).should.equal(%w{bb cc})
       end
 
@@ -37,7 +39,9 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
       should 'return yield result given single arg' do
         x = 'a'
-        s_proc = SerializableProc.new {|i| %w{b c}.map{|x| x*i } }
+        s_proc = SerializableProc.new do |i|
+          %w{b c}.map{|x| x*i }
+        end
         s_proc.send(invoke, 2, binding).should.equal(%w{bb cc})
       end
 

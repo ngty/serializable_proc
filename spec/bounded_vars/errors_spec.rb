@@ -6,22 +6,30 @@ describe 'SerializableProc::CannotSerializeVariableError' do
 
   should "raise if local variable cannot be marshalled" do
     f = Tempfile.new('fake')
-    lambda { SerializableProc.new{ f } }.should.be raising_cannot_serialize_variable_error('f')
+    lambda {
+      SerializableProc.new{ f }
+    }.should.be raising_cannot_serialize_variable_error('f')
   end
 
   should "raise if class variable cannot be marshalled" do
     @@f = Tempfile.new('fake')
-    lambda { SerializableProc.new{ @@f } }.should.be raising_cannot_serialize_variable_error('@@f')
+    lambda {
+      SerializableProc.new{ @@f }
+    }.should.be raising_cannot_serialize_variable_error('@@f')
   end
 
   should "raise if instance variable cannot be marshalled" do
     @f = Tempfile.new('fake')
-    lambda { SerializableProc.new{ @f } }.should.be raising_cannot_serialize_variable_error('@f')
+    lambda {
+      SerializableProc.new{ @f }
+    }.should.be raising_cannot_serialize_variable_error('@f')
   end
 
   should "raise if global variable cannot be marshalled" do
     $f = Tempfile.new('fake')
-    lambda { SerializableProc.new{ $f } }.should.be raising_cannot_serialize_variable_error('$f')
+    lambda {
+      SerializableProc.new{ $f }
+    }.should.be raising_cannot_serialize_variable_error('$f')
   end
 
 end
