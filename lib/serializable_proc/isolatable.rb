@@ -67,21 +67,13 @@ class SerializableProc
       end
 
       def isolatable_declarative(sexp)
-        case sexp
-        when Sexp
-          pattern = s(:cvdecl, ISOLATION_VAR, SexpAny.new)
-          isolatable_declarative(sexp.to_a - sexp.gsub(pattern, nil).to_a)
-        when Array
-          if sexp[0] == :cvdecl && sexp[1] == ISOLATION_VAR
-            types, pattern = [], /\[:lit,\ :(\w+)\]/
-            sexp[-1].inspect.gsub(pattern){|s| s =~ pattern; types << $1 }
-            types
-          else
-            sexp.select{|e| e.is_a?(Array) }.map do |e|
-              isolatable_declarative(e)
-            end.flatten.compact
-          end
+        declaratives = []
+        sexp.each_of_type(:cvdecl) do |node|
+          next unless node.to_a[1] == ISOLATION_VAR
+          node.each_of_type(:lit) {|_node| declaratives << _node.to_a[-1].to_s }
+          break
         end
+        declaratives
       end
 
       def isolatable?(var)
