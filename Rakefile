@@ -13,9 +13,9 @@ begin
     gem.email = "ngty77@gmail.com"
     gem.homepage = "http://github.com/ngty/serializable_proc"
     gem.authors = ["NgTzeYang"]
-    gem.add_dependency "sourcify", ">= 0.2.1"
-    gem.add_dependency "ruby2ruby", ">= 1.2.4"
-    gem.add_dependency "sexp_processor", ">= 3.0.4"
+    gem.add_dependency "sourcify", ">= 0.2.2.1"
+    gem.add_dependency "ruby2ruby", ">= 1.2.5"
+    gem.add_dependency "sexp_processor", ">= 3.0.5"
     gem.add_development_dependency "bacon", ">= 0"
   end
 
