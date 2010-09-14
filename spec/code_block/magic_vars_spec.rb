@@ -11,7 +11,7 @@ describe 'Handling magic vars' do
 
   should 'convert __LINE__' do
     SerializableProc.new { __LINE__ }.should.be \
-      having_runnable_code_as('proc { %s }' % __LINE__.pred)
+      having_runnable_code_as('proc { %s }' % (__LINE__ - 1))
   end
 
 end
