@@ -76,13 +76,19 @@ describe 'Being proc like' do
   end
 
   describe '>> arity' do
+    block1 = lambda { }
+    block2 = lambda {|x| }
+    block3 = lambda {|x,y| }
+    block4 = lambda {|*x| }
+    block5 = lambda {|x, *y| }
+    block6 = lambda {|(x,y)| }
     {
-      __LINE__ => lambda { },
-      __LINE__ => lambda {|x| },
-      __LINE__ => lambda {|x,y| },
-      __LINE__ => lambda {|*x| },
-      __LINE__ => lambda {|x, *y| },
-      __LINE__ => lambda {|(x,y)| },
+      __LINE__ => block1,
+      __LINE__ => block2,
+      __LINE__ => block3,
+      __LINE__ => block4,
+      __LINE__ => block5,
+      __LINE__ => block6,
     }.each do |debug, block|
       should "return arity of initializing block [##{debug}]" do
         SerializableProc.new(&block).arity.should.equal(block.arity)
