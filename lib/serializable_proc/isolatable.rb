@@ -68,10 +68,13 @@ class SerializableProc
 
       def isolatable_declarative(sexp)
         declaratives = []
-        sexp.each_of_type(:cvdecl) do |node|
-          next unless node.to_a[1] == ISOLATION_VAR
-          node.each_of_type(:lit) {|_node| declaratives << _node.to_a[-1].to_s }
-          break
+        [:cvdecl, :cvasgn].each do |type|
+          sexp.each_of_type(type) do |node|
+            next unless node.to_a[1] == ISOLATION_VAR
+            node.each_of_type(:lit) {|_node| declaratives << _node.to_a[-1].to_s }
+            break
+          end
+          break unless declaratives.empty?
         end
         declaratives
       end
