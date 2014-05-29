@@ -42,7 +42,7 @@ class SerializableProc
         end
 
         def mclone(val)
-          Marshal.load(mdump(val))
+          Marshal.load(Marshal.dump(val))
         end
 
     end
