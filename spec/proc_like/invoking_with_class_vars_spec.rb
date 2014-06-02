@@ -39,21 +39,21 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
 
     describe '>> (wo isolation)' do
 
-      if RUBY_VERSION.include?('1.9.')
+      # if RUBY_VERSION.include?('1.9.')
 
-        should 'raise NameError when wo specified binding' do
-          @@x, @@y = 'wonder', 'ful'
-          s_proc = SerializableProc.new do
-            @@_not_isolated_vars = :class
-            @@x.sub!('awe','hand')
-            @@x + @@y
-          end
-          @@x, @@y = 'awe', 'some'
-          lambda { s_proc.send(invoke) }.should.raise(NameError)
-        end
+      #   should 'raise NameError when wo specified binding' do
+      #     @@x, @@y = 'wonder', 'ful'
+      #     s_proc = SerializableProc.new do
+      #       @@_not_isolated_vars = :class
+      #       @@x.sub!('awe','hand')
+      #       @@x + @@y
+      #     end
+      #     @@x, @@y = 'awe', 'some'
+      #     lambda { s_proc.send(invoke) }.should.raise(NameError)
+      #   end
 
-      else
-
+      # else
+      # At least Ruby 1.9.3-p448 behaves the way it is below 
         should 'reflect out-of-scope vars even when wo specified binding' do
           @@x, @@y = 'wonder', 'ful'
           s_proc = SerializableProc.new do
@@ -65,7 +65,7 @@ require File.join(File.dirname(__FILE__), '..', 'spec_helper')
           s_proc.send(invoke).should.equal('handsome')
         end
 
-      end
+      # end
 
       should 'be affected by out-of-scope changes w specified binding' do
         @@x, @@y = 'wonder', 'ful'

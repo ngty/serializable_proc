@@ -27,7 +27,7 @@ end
 require 'rake/testtask'
 Rake::TestTask.new(:spec) do |spec|
   spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
+  spec.pattern = ENV['SPEC_PATH'] || 'spec/**/*_spec.rb' 
   spec.verbose = true
 end
 
