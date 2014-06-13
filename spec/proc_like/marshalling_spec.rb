@@ -27,18 +27,18 @@ describe 'Marshalling' do
       Marshal.load(Marshal.dump(s_proc)).call.should.equal(expected)
     end
 
-    should 'handle local variables that marshal with "|" character' do
-      class MarshallingTestClass
-        attr_accessor :i
-        def initialize
-          @i = 31921
-        end
-      end
-
-      testClass = MarshallingTestClass.new
-      s_proc = SerializableProc.new{ testClass.i }
-      Marshal.load(Marshal.dump(s_proc)).call.should.equal(31921)
+    should 'handle local variables that marshal with "|"' do
+      v = {a: '|'}
+      s_proc = SerializableProc.new{ v[:a] }
+      Marshal.load(Marshal.dump(s_proc)).call.should.equal('|')
     end
+
+    should 'handle local variables that marshal with "#{"' do
+      v = {a: '#{'}
+      s_proc = SerializableProc.new{ v[:a] }
+      Marshal.load(Marshal.dump(s_proc)).call.should.equal('#{')
+    end
+
 
     should 'handle instance variables' do
       @x, @y, expected = 'awe', 'some', 'awesome'
