@@ -29,7 +29,7 @@ class SerializableProc
     private
 
       def declare_vars
-        @declare_vars ||= @vars.map{|(k,v)| "#{k} = Marshal.load(%q|#{mdump(v)}|)" } * '; '
+        @declare_vars ||= @vars.map{|(k,v)| "#{k} = #{evaluable_string(v)}" } * '; '
       end
 
       def bounded_val(var, binding)
