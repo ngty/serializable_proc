@@ -39,6 +39,12 @@ describe 'Marshalling' do
       Marshal.load(Marshal.dump(s_proc)).call.should.equal('#{')
     end
 
+    should 'handle local variables that marshal with some non-friendly char' do
+      require 'time'
+      v = Time.parse('Mon, 16 Jun 2014 11:23:13')
+      s_proc = SerializableProc.new{ v }
+      Marshal.load(Marshal.dump(s_proc)).call.should.equal(v)
+    end      
 
     should 'handle instance variables' do
       @x, @y, expected = 'awe', 'some', 'awesome'

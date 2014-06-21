@@ -1,3 +1,5 @@
+require "base64"
+
 class SerializableProc
   module Marshalable
 
@@ -37,8 +39,8 @@ class SerializableProc
 
       protected
 
-        def mdump(val)
-          Marshal.dump(val).gsub('|','\|')
+        def evaluable_string(val)
+          "Marshal.load(Base64.strict_decode64(%q|#{Base64.strict_encode64(Marshal.dump(val)).gsub('|','\|')}|))"
         end
 
         def mclone(val)
