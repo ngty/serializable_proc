@@ -29,20 +29,29 @@ proc's scope, thus, achieving a snapshot effect.
   s_proc.call # >> "lx, ix, cx, gx"
   v_proc.call # >> "ly, iy, cy, gy"
 
-Sometimes, we may want global variables to behave as truely global, meaning we don't want
-to isolate globals at all, this can be done by declaring @@_not_isolated_vars within the
-code block:
+Sometimes, we may want global variables to behave as truly global, meaning we don't want
+to isolate globals at all, this can be done by specifying :ignore option in the constructor call:
 
-  s_proc = SerializableProc.new do
-    @@_not_isolated_vars = :global # globals won't be isolated
+  s_proc = SerializableProc.new(ignore: :global) do
     $stdout << "WakeUp !!"         # $stdout is the $stdout in the execution context
   end
 
 Supported values are :global, :class, :instance, :local & :all, with :all overriding
 all others. The following declares all variables as not isolatable:
 
-  s_proc = SerializableProc.new do
-    @@_not_isolated_vars = :all
+  s_proc = SerializableProc.new(ignore: :all) do
+    ...
+  end
+
+You can also set :isolate option explicitly in the constructor to specify which variable types should be isolated. The supported values as same as for the :ignore option. The following will isolate only locals:
+
+  s_proc = SerializableProc.new(isolate: :local) do
+    ...
+  end
+
+Note that the :ignore option will be processed on top of the :isolate option. The following will isolate only locals:
+
+  s_proc = SerializableProc.new(isolate: :all, ignore: [:global, :class, :instance]) do
     ...
   end
 

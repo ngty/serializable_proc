@@ -1,6 +1,7 @@
 class SerializableProc
   module Isolatable
 
+    ISOLATION_TYPES = [:local, :class, :instance, :global]
     MAPPERS = {'l' => '', 'c' => '@@', 'i' => '@', 'g' => '$'}
     ISOLATION_VAR = :@@_not_isolated_vars
     BLOCK_SCOPES = [:class, :sclass, :defn, :module]
@@ -33,13 +34,18 @@ class SerializableProc
     private
 
       def isolated_types(sexp)
-        if (declarative = isolatable_declarative(sexp)).empty?
-          MAPPERS.keys
-        elsif declarative.include?('all')
-          []
-        else
-          MAPPERS.keys - declarative.map{|e| e[0].chr }
-        end
+        isolated_types = ISOLATION_TYPES # by default, isolate all
+
+        # accept single symbols as well as arrays
+        @isolate = [@isolate].flatten if @isolate
+        @ignore = [@ignore].flatten if @ignore
+
+        isolated_types = @isolate if @isolate && !@isolate.include?(:all)
+        # backwards-compatibility for inline @@_not_isolated_vars syntax
+        @ignore ||= isolatable_declarative(sexp).map(&:to_sym)
+        ignored_types = @ignore.include?(:all) ? ISOLATION_TYPES : @ignore if @ignore
+
+        ((isolated_types - ignored_types) & ISOLATION_TYPES).map{|e| e[0].chr }
       end
 
       def isolated_sexp_arry(array)

@@ -30,13 +30,12 @@ require 'serializable_proc/binding'
 #   s_proc.call # >> "lx, ix, cx, gx"
 #   v_proc.call # >> "ly, iy, cy, gy"
 #
-# It is possible to fine-tune how variables isolation is being applied by declaring
-# @@_not_isolated_vars within the code block:
+# It is possible to fine-tune how variables isolation is being applied by specifying :ignore 
+# option to the constructor.
 #
 #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
 #
-#   s_proc = SerializableProc.new do
-#     @@_not_isolated_vars = :all
+#   s_proc = SerializableProc.new(ignore: :all) do
 #     [x, @x, @@x, $x].join(', ')
 #   end
 #
@@ -49,10 +48,24 @@ require 'serializable_proc/binding'
 # overriding all others. This can also be used as a workaround for variables that cannot
 # be serialized:
 #
-#   SerializableProc.new do
-#     @@_not_isolated_vars = :global # don't isolate globals
-#     $stdout << 'WAKE UP !!'        # $stdout won't be isolated (avoid marshal error)
+#   SerializableProc.new(ignore: :global) do
+#     $stdout << 'WAKE UP !!'        # global $stdout won't be isolated (avoid marshal error)
 #   end
+#
+# You can also set :isolate option explicitly in the constructor to specify which variable 
+# types should be isolated. The supported values as same as for the :ignore option. 
+# The following will isolate only locals:
+#
+#  s_proc = SerializableProc.new(isolate: :local) do
+#    ...
+#  end
+#
+# Note that the :ignore option will be processed on top of the :isolate option. 
+# The following will isolate only locals:
+#
+#  s_proc = SerializableProc.new(isolate: :all, ignore: [:global, :class, :instance]) do
+#    ...
+#  end
 #
 # Note that it is strongly-advised to append Kernel.binding as the last parameter when
 # invoking the proc to avoid unnecessary nasty surprises. (see #call for more details)
@@ -86,7 +99,8 @@ class SerializableProc
   #   def action(&block) ; SerializableProc.new(&block) ; end
   #   action { ... }
   #
-  def initialize(&block)
+  def initialize(options = {}, &block)
+    @isolate, @ignore = options[:isolate], options[:ignore]
     e_code, e_sexp = block.to_source, block.to_sexp
     r_sexp, r_code = isolated_sexp_and_code(e_sexp)
     @arity, @file, @line = block.arity, *block.source_location
@@ -195,13 +209,12 @@ class SerializableProc
   #   SerializableProc.new{|i| (['hello'] * i).join(' ') }.call(2)
   #   # >> 'hello hello'
   #
-  # In the case where variables have been declared not-isolated with @@_not_isolated_vars,
+  # In the case where variables have been declared non-isolated with the :isolate/:ignore options,
   # invoking requires passing in +Kernel.binding+ as the last parameter avoid unexpected
   # surprises:
   #
   #   x, @x, @@x, $x = 'lx', 'ix', 'cx', 'gx'
-  #   s_proc = SerializableProc.new do
-  #     @@_not_isolated_vars = :global, :class, :instance, :local
+  #   s_proc = SerializableProc.new(ignore: [:global, :class, :instance, :local]) do
   #     [x, @x, @@x, $x].join(', ')
   #   end
   #
