@@ -1,5 +1,8 @@
 = serializable_proc
 
+== IMPORTANT#1: SerializableProc was written in the days of ruby 1.9.x, it should be buggy for anything beyond that.
+== IMPORTANT#2: SerializableProc is no longer maintained, use it at your own risk, & expect no bug fixes.
+
 As the name suggests, SerializableProc is a proc that can be serialized (marshalled).
 A proc is a closure, which consists of the code block defining it, and binding of
 local variables. SerializableProc's approach to serializability is to extract:
